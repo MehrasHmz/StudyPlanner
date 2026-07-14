@@ -1,0 +1,86 @@
+@model StudyPlanner.Application.DTOs.StudyItemDto
+@{ ViewData["Title"] = "Edit Study Item"; var categories = ViewBag.Categories as List<StudyPlanner.Application.DTOs.CategoryDto> ?? new(); var errors = ViewBag.Errors as List<string> ?? new(); }
+
+<div class="container py-4">
+    <div class="section-header">
+        <h2><i class="bi bi-pencil"></i>Edit Study Item</h2>
+    </div>
+
+    @if (errors.Any())
+    {
+        <div class="alert alert-danger">
+            <i class="bi bi-exclamation-triangle me-2"></i><strong>Please fix:</strong>
+            <ul class="mb-0 mt-1">
+                @foreach (var e in errors) { <li>@e</li> }
+            </ul>
+        </div>
+    }
+
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="card">
+                <div class="card-body p-4">
+                    <form asp-action="Edit" method="post">
+                        <input type="hidden" name="Id" value="@Model.Id" />
+                        <div class="mb-3">
+                            <label class="form-label">Title *</label>
+                            <input type="text" name="Title" value="@Model.Title" class="form-control" required maxlength="200" />
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Description</label>
+                            <textarea name="Description" class="form-control" rows="3" maxlength="1000">@Model.Description</textarea>
+                        </div>
+                        <div class="row g-3 mb-3">
+                            <div class="col-md-4">
+                                <label class="form-label">Type *</label>
+                                <select name="Type" class="form-select">
+                                    @foreach (var t in Enum.GetValues<StudyPlanner.Domain.Enums.StudyItemType>())
+                                    {
+                                        <option value="@t" selected="@(t == Model.Type)">@t</option>
+                                    }
+                                </select>
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label">Difficulty *</label>
+                                <select name="Difficulty" class="form-select">
+                                    @foreach (var d in Enum.GetValues<StudyPlanner.Domain.Enums.DifficultyLevel>())
+                                    {
+                                        <option value="@d" selected="@(d == Model.Difficulty)">@d</option>
+                                    }
+                                </select>
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label">Priority (1-5) *</label>
+                                <input type="number" name="Priority" value="@Model.Priority" class="form-control" min="1" max="5" />
+                            </div>
+                        </div>
+                        <div class="row g-3 mb-4">
+                            <div class="col-md-4">
+                                <label class="form-label">Duration (min) *</label>
+                                <input type="number" name="EstimatedDurationMinutes" value="@Model.EstimatedDurationMinutes" class="form-control" min="1" />
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label">Category *</label>
+                                <select name="CategoryId" class="form-select" required>
+                                    <option value="">-- Select category --</option>
+                                    @foreach (var cat in categories)
+                                    {
+                                        <option value="@cat.Id" selected="@(cat.Id == Model.CategoryId)">@cat.Name</option>
+                                    }
+                                </select>
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label">Next Review Date</label>
+                                <input type="date" name="NextReviewDate" value="@(Model.NextReviewDate?.ToString("yyyy-MM-dd"))" class="form-control" />
+                            </div>
+                        </div>
+                        <div class="d-flex gap-2">
+                            <button type="submit" class="btn btn-primary"><i class="bi bi-check-circle me-1"></i>Save Changes</button>
+                            <a asp-action="Index" class="btn btn-outline-secondary">Cancel</a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

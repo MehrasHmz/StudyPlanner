@@ -1,0 +1,40 @@
+@{ ViewData["Title"] = "Create Category"; var errors = ViewBag.Errors as List<string> ?? new(); }
+
+<div class="container py-4">
+    <div class="section-header">
+        <h2><i class="bi bi-folder-plus"></i>Create Category</h2>
+    </div>
+
+    @if (errors.Any())
+    {
+        <div class="alert alert-danger">
+            <i class="bi bi-exclamation-triangle me-2"></i><strong>Please fix:</strong>
+            <ul class="mb-0 mt-1">
+                @foreach (var e in errors) { <li>@e</li> }
+            </ul>
+        </div>
+    }
+
+    <div class="row justify-content-center">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-body p-4">
+                    <form asp-action="Create" method="post">
+                        <div class="mb-3">
+                            <label class="form-label">Name *</label>
+                            <input type="text" name="Name" class="form-control" required maxlength="100" placeholder="e.g. Mathematics" />
+                        </div>
+                        <div class="mb-4">
+                            <label class="form-label">Description</label>
+                            <textarea name="Description" class="form-control" rows="3" maxlength="500" placeholder="Optional description..."></textarea>
+                        </div>
+                        <div class="d-flex gap-2">
+                            <button type="submit" class="btn btn-primary"><i class="bi bi-check-circle me-1"></i>Create</button>
+                            <a asp-action="Index" class="btn btn-outline-secondary">Cancel</a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

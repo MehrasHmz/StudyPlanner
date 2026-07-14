@@ -1,0 +1,88 @@
+@model StudyPlanner.Application.DTOs.StudySessionDto
+@{ ViewData["Title"] = "Planned Session"; }
+
+<div class="container py-4">
+    <div class="section-header">
+        <h2><i class="bi bi-calendar-check"></i>Planned Session</h2>
+        <a asp-action="Index" class="btn btn-outline-primary"><i class="bi bi-arrow-left me-1"></i>Back</a>
+    </div>
+
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="card mb-4">
+                <div class="card-body">
+                    <div class="row text-center g-3">
+                        <div class="col-md-3">
+                            <div class="stat-label mb-1">Available</div>
+                            <div class="stat-value text-primary">@Model.AvailableMinutes<span class="fs-6 fw-normal"> min</span></div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="stat-label mb-1">Planned</div>
+                            <div class="stat-value text-success">@Model.TotalPlannedMinutes<span class="fs-6 fw-normal"> min</span></div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="stat-label mb-1">Items</div>
+                            <div class="stat-value">@Model.TotalPlannedItems</div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="stat-label mb-1">Status</div>
+                            <span class="badge bg-info mt-2" style="font-size: 0.9rem; padding: 0.5em 1em;">@Model.Status</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            @if (Model.Items.Any())
+            {
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h5 class="mb-0">Planned Items (in order)</h5>
+                    </div>
+                    <div class="card-body p-0">
+                        <div class="table-responsive">
+                            <table class="table table-hover mb-0">
+                                <thead>
+                                    <tr>
+                                        <th>#</th>
+                                        <th>Item</th>
+                                        <th>Minutes</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var item in Model.Items.OrderBy(i => i.Order))
+                                    {
+                                        <tr>
+                                            <td><span class="badge bg-primary rounded-pill">@item.Order</span></td>
+                                            <td class="fw-semibold">@item.StudyItemTitle</td>
+                                            <td>@item.PlannedMinutes min</td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <form asp-action="CompleteSession" method="post">
+                    <input type="hidden" name="SessionId" value="@Model.Id" />
+                    @foreach (var item in Model.Items.OrderBy(i => i.Order))
+                    {
+                        <input type="hidden" name="Results[@(item.Order-1)].StudyItemId" value="@item.StudyItemId" />
+                        <input type="hidden" name="Results[@(item.Order-1)].MinutesSpent" value="@item.PlannedMinutes" />
+                        <input type="hidden" name="Results[@(item.Order-1)].Score" value="" />
+                        <input type="hidden" name="Results[@(item.Order-1)].Notes" value="" />
+                    }
+                    <button type="submit" class="btn btn-success btn-lg w-100" onclick="return confirm('Mark all items as completed?')">
+                        <i class="bi bi-check-circle me-2"></i>Complete Entire Session
+                    </button>
+                </form>
+            }
+            else
+            {
+                <div class="alert alert-info text-center">
+                    <i class="bi bi-info-circle me-2"></i>No items fit within the available time. Try adding more study items or increasing your available time.
+                </div>
+            }
+        </div>
+    </div>
+</div>

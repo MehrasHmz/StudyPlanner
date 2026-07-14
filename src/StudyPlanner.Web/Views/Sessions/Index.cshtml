@@ -1,0 +1,59 @@
+@{ ViewData["Title"] = "Session Planner"; }
+
+<div class="container py-4">
+    <div class="section-header">
+        <h2><i class="bi bi-calendar-check"></i>Session Planner</h2>
+    </div>
+
+    <div class="row justify-content-center g-4">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-body p-5 text-center">
+                    <div class="stat-icon primary mx-auto mb-3" style="width: 64px; height: 64px; font-size: 2rem;">
+                        <i class="bi bi-clock-history"></i>
+                    </div>
+                    <h4 class="fw-bold mb-3">Plan Your Study Session</h4>
+                    <p class="text-muted mb-4">Enter how many minutes you have available. Our algorithm will select the best study items for you based on priority, difficulty, and review dates.</p>
+
+                    <form asp-action="Plan" method="post">
+                        <div class="mb-4">
+                            <label class="form-label fw-semibold">Available Minutes</label>
+                            <div class="input-group justify-content-center">
+                                <span class="input-group-text"><i class="bi bi-clock"></i></span>
+                                <input type="number" name="AvailableMinutes" class="form-control form-control-lg text-center" style="max-width: 150px" min="5" max="480" value="45" required />
+                                <span class="input-group-text">min</span>
+                            </div>
+                        </div>
+                        <button type="submit" class="btn btn-primary btn-lg px-5">
+                            <i class="bi bi-lightning me-2"></i>Plan Session
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            <div class="card h-100">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="bi bi-info-circle me-2"></i>How it works</h5>
+                </div>
+                <div class="card-body">
+                    <ol class="mb-0 ps-3">
+                        <li class="mb-3">
+                            <span class="text-muted">Enter your available study time</span>
+                        </li>
+                        <li class="mb-3">
+                            <span class="text-muted">Algorithm selects items by priority & urgency</span>
+                        </li>
+                        <li class="mb-3">
+                            <span class="text-muted">Review your planned session</span>
+                        </li>
+                        <li>
+                            <span class="text-muted">Complete the session when done</span>
+                        </li>
+                    </ol>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

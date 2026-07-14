@@ -1,0 +1,47 @@
+@{ ViewData["Title"] = "Login"; }
+
+<div class="container auth-page">
+    <div class="auth-card">
+        <div class="auth-video-panel">
+            <video class="auth-video" autoplay muted loop playsinline>
+                <source src="~/videos/12145257_2160_3840_30fps.mp4" type="video/mp4" />
+            </video>
+            <div class="auth-video-overlay">
+                <div class="auth-video-text">
+                    <h3>Welcome Back!</h3>
+                    <p>Continue your learning journey where you left off.</p>
+                </div>
+            </div>
+        </div>
+        <div class="auth-form-panel">
+            <div class="auth-logo">
+                <i class="bi bi-book-half"></i>
+            </div>
+            <h2 class="auth-title">Sign In</h2>
+            <p class="auth-subtitle">Enter your credentials to access your account</p>
+
+            <form asp-action="Login" method="post">
+                <div class="mb-3">
+                    <label class="form-label">Email Address</label>
+                    <input type="email" name="Email" class="form-control" required placeholder="you@example.com" />
+                </div>
+                <div class="mb-4">
+                    <label class="form-label">Password</label>
+                    <div class="password-toggle-wrapper">
+                        <input type="password" name="Password" class="form-control" required placeholder="Enter your password" />
+                        <button type="button" class="password-toggle-btn" onclick="togglePassword(this)">
+                            <i class="bi bi-eye"></i>
+                        </button>
+                    </div>
+                </div>
+                <button type="submit" class="btn btn-primary w-100 mb-3">
+                    <i class="bi bi-box-arrow-in-right me-2"></i>Sign In
+                </button>
+                <p class="text-center text-muted mb-0">
+                    Don't have an account?
+                    <a asp-action="Register" class="fw-semibold">Create one</a>
+                </p>
+            </form>
+        </div>
+    </div>
+</div>

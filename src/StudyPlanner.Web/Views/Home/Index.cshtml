@@ -1,0 +1,175 @@
+@model StudyPlanner.Application.DTOs.DashboardDto
+@{ ViewData["Title"] = "Dashboard"; }
+
+<div class="container">
+    <section class="hero-section">
+        <div class="hero-video-wrapper">
+            <video class="hero-video" autoplay muted loop playsinline>
+                <source src="~/videos/7311107-uhd_2160_4096_25fps.mp4" type="video/mp4" />
+            </video>
+            <div class="hero-overlay"></div>
+            <div class="hero-content">
+                <div class="hero-badge">
+                    <i class="bi bi-lightning-charge-fill"></i>
+                    Smart Study Planning
+                </div>
+                <h1 class="hero-title">
+                    Master Your <span class="gradient-text">Learning Journey</span>
+                </h1>
+                <p class="hero-subtitle">
+                    Track progress, plan sessions, and optimize your study time with intelligent scheduling.
+                </p>
+                <div class="hero-actions">
+                    <a asp-controller="StudyItems" asp-action="Create" class="btn btn-primary btn-lg">
+                        <i class="bi bi-plus-circle me-2"></i>Start Studying
+                    </a>
+                    <a asp-controller="Sessions" asp-action="Index" class="btn btn-outline-secondary btn-lg">
+                        <i class="bi bi-calendar-plus me-2"></i>Plan Session
+                    </a>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <div class="row g-4 mb-4">
+        <div class="col-md-3 col-6">
+            <div class="card stat-card primary h-100">
+                <div class="card-body text-center">
+                    <div class="stat-icon primary"><i class="bi bi-journal-text"></i></div>
+                    <div class="stat-value">@Model.TotalItems</div>
+                    <div class="stat-label">Total Items</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3 col-6">
+            <div class="card stat-card success h-100">
+                <div class="card-body text-center">
+                    <div class="stat-icon success"><i class="bi bi-check-circle"></i></div>
+                    <div class="stat-value">@Model.CompletedItems</div>
+                    <div class="stat-label">Completed</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3 col-6">
+            <div class="card stat-card warning h-100">
+                <div class="card-body text-center">
+                    <div class="stat-icon warning"><i class="bi bi-clock-history"></i></div>
+                    <div class="stat-value">@Model.DueForReview</div>
+                    <div class="stat-label">Due for Review</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3 col-6">
+            <div class="card stat-card info h-100">
+                <div class="card-body text-center">
+                    <div class="stat-icon info"><i class="bi bi-stopwatch"></i></div>
+                    <div class="stat-value">@Model.TotalMinutesStudied</div>
+                    <div class="stat-label">Minutes Studied</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row g-4">
+        <div class="col-lg-8">
+            <div class="card h-100">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0"><i class="bi bi-clock me-2"></i>Recent Study Items</h5>
+                    <a asp-controller="StudyItems" asp-action="Index" class="btn btn-sm btn-outline-primary">View All</a>
+                </div>
+                <div class="card-body p-0">
+                    @if (Model.RecentItems.Any())
+                    {
+                        <div class="table-responsive">
+                            <table class="table table-hover mb-0">
+                                <thead>
+                                    <tr>
+                                        <th>Title</th>
+                                        <th>Type</th>
+                                        <th>Difficulty</th>
+                                        <th>Priority</th>
+                                        <th>Status</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var item in Model.RecentItems)
+                                    {
+                                        <tr>
+                                            <td class="fw-semibold">@item.Title</td>
+                                            <td><span class="badge bg-secondary">@item.Type</span></td>
+                                            <td>
+                                                <span class="badge bg-@(item.Difficulty == StudyPlanner.Domain.Enums.DifficultyLevel.Advanced ? "danger" : item.Difficulty == StudyPlanner.Domain.Enums.DifficultyLevel.Intermediate ? "warning" : "success")">
+                                                    @item.Difficulty
+                                                </span>
+                                            </td>
+                                            <td><span class="badge bg-primary">P@(item.Priority)</span></td>
+                                            <td>
+                                                @if (item.IsCompleted)
+                                                {
+                                                    <span class="badge bg-success"><i class="bi bi-check"></i> Done</span>
+                                                }
+                                                else
+                                                {
+                                                    <span class="badge bg-light">Pending</span>
+                                                }
+                                            </td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="empty-state">
+                            <i class="bi bi-inbox d-block"></i>
+                            <p>No study items yet. <a asp-controller="StudyItems" asp-action="Create">Create your first item!</a></p>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-4">
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="bi bi-lightning me-2"></i>Quick Actions</h5>
+                </div>
+                <div class="card-body d-flex flex-column gap-2">
+                    <a asp-controller="StudyItems" asp-action="Create" class="quick-action-btn">
+                        <i class="bi bi-plus-circle"></i>
+                        <span>New Study Item</span>
+                    </a>
+                    <a asp-controller="Sessions" asp-action="Plan" class="quick-action-btn">
+                        <i class="bi bi-calendar-plus"></i>
+                        <span>Plan Session</span>
+                    </a>
+                    <a asp-controller="Categories" asp-action="Create" class="quick-action-btn">
+                        <i class="bi bi-folder-plus"></i>
+                        <span>New Category</span>
+                    </a>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="bi bi-graph-up me-2"></i>Session Stats</h5>
+                </div>
+                <div class="card-body">
+                    <div class="d-flex justify-content-between mb-3 pb-2" style="border-bottom: 1px solid var(--border-subtle);">
+                        <span class="text-muted">Total Sessions</span>
+                        <strong>@Model.TotalSessions</strong>
+                    </div>
+                    <div class="d-flex justify-content-between mb-3 pb-2" style="border-bottom: 1px solid var(--border-subtle);">
+                        <span class="text-muted">Total Items</span>
+                        <strong>@Model.TotalItems</strong>
+                    </div>
+                    <div class="d-flex justify-content-between">
+                        <span class="text-muted">Completed</span>
+                        <strong class="text-success">@Model.CompletedItems</strong>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
