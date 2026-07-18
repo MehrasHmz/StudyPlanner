@@ -1,9 +1,11 @@
 using MediatR;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using StudyPlanner.Application.Queries.Categories;
 
 namespace StudyPlanner.Web.Controllers;
 [ApiController]
+[Authorize]
 [Route("api/categories")]
 public class CategoriesApiController : ControllerBase
 {

@@ -1,5 +1,6 @@
 using FluentValidation;
 using MediatR;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using StudyPlanner.Application.Commands.StudyItems;
 using StudyPlanner.Application.DTOs;
@@ -7,7 +8,8 @@ using StudyPlanner.Application.Queries.Categories;
 using StudyPlanner.Application.Queries.StudyItems;
 
 namespace StudyPlanner.Web.Controllers;
-public class StudyItemsController : Controller
+[Authorize]
+public class StudyItemsController : BaseController
 {
     private readonly IMediator _mediator;
     public StudyItemsController(IMediator mediator) => _mediator = mediator;
@@ -28,7 +30,7 @@ public class StudyItemsController : Controller
     public async Task<IActionResult> Edit(Guid id)
     {
         var item = await _mediator.Send(new GetStudyItemByIdQuery(id));
-        if (item == null) return NotFound();
+        if (item == null || item.UserId != GetUserId()) return NotFound();
         ViewBag.Categories = await LoadCategories();
         ViewBag.Errors = new List<string>();
         return View(item);
@@ -97,8 +99,6 @@ public class StudyItemsController : Controller
         await _mediator.Send(new ToggleCompleteCommand(id));
         return RedirectToAction(nameof(Index));
     }
-
-    private static Guid GetUserId() => Guid.Parse("00000000-0000-0000-0000-000000000001");
 
     private async Task<List<CategoryDto>> LoadCategories()
     {

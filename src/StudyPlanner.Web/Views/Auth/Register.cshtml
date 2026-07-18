@@ -1,51 +1,413 @@
-@{ ViewData["Title"] = "Register"; }
+@{ ViewData["Title"] = "Create Account"; Layout = null; }
 
-<div class="container auth-page">
-    <div class="auth-card">
-        <div class="auth-video-panel">
-            <video class="auth-video" autoplay muted loop playsinline>
-                <source src="~/videos/12145257_2160_3840_30fps.mp4" type="video/mp4" />
-            </video>
-            <div class="auth-video-overlay">
-                <div class="auth-video-text">
-                    <h3>Start Learning Today</h3>
-                    <p>Join thousands of students optimizing their study time.</p>
-                </div>
-            </div>
-        </div>
-        <div class="auth-form-panel">
-            <div class="auth-logo">
-                <i class="bi bi-person-plus"></i>
-            </div>
-            <h2 class="auth-title">Create Account</h2>
-            <p class="auth-subtitle">Start your learning journey today</p>
+<!DOCTYPE html>
+<html lang="en" data-bs-theme="dark">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=0.5, maximum-scale=5.0, user-scalable=yes" />
+    <title>Create Account - StudyPlanner</title>
+    <link rel="icon" type="image/png" href="~/logo.png" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" />
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet" />
+    <link href="~/css/site.css" rel="stylesheet" />
+    <style>
+        .auth-fullpage {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            overflow: hidden;
+            padding: 2rem 1rem;
+        }
 
-            <form asp-action="Register" method="post">
-                <div class="mb-3">
-                    <label class="form-label">Full Name</label>
-                    <input type="text" name="FullName" class="form-control" required placeholder="John Doe" />
-                </div>
-                <div class="mb-3">
-                    <label class="form-label">Email Address</label>
-                    <input type="email" name="Email" class="form-control" required placeholder="you@example.com" />
-                </div>
-                <div class="mb-4">
-                    <label class="form-label">Password</label>
-                    <div class="password-toggle-wrapper">
-                        <input type="password" name="Password" class="form-control" required minlength="6" placeholder="Min 6 characters" />
-                        <button type="button" class="password-toggle-btn" onclick="togglePassword(this)">
-                            <i class="bi bi-eye"></i>
-                        </button>
-                    </div>
-                </div>
-                <button type="submit" class="btn btn-primary w-100 mb-3">
-                    <i class="bi bi-person-plus me-2"></i>Create Account
-                </button>
-                <p class="text-center text-muted mb-0">
-                    Already have an account?
-                    <a asp-action="Login" class="fw-semibold">Sign in</a>
-                </p>
-            </form>
-        </div>
+        .auth-fullpage-video {
+            position: absolute;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            object-fit: cover;
+            z-index: 0;
+        }
+
+        .auth-fullpage-overlay {
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: linear-gradient(135deg, rgba(15,15,35,0.55) 0%, rgba(15,15,35,0.8) 100%);
+            z-index: 1;
+        }
+
+        [data-theme="light"] .auth-fullpage-overlay {
+            background: linear-gradient(135deg, rgba(248,250,252,0.5) 0%, rgba(248,250,252,0.85) 100%);
+        }
+
+        .auth-card-wrapper {
+            position: relative;
+            z-index: 2;
+            width: 100%;
+            max-width: 440px;
+        }
+
+        .auth-card-top {
+            text-align: center;
+            margin-bottom: 2rem;
+            animation: fadeInUp 0.5s ease-out;
+        }
+
+        .auth-card-top .back-link {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.4rem;
+            color: var(--text-muted);
+            font-size: 0.85rem;
+            font-weight: 500;
+            text-decoration: none;
+            margin-bottom: 1.5rem;
+            transition: color 0.2s;
+        }
+
+        .auth-card-top .back-link:hover {
+            color: var(--primary-light);
+        }
+
+        .auth-card-top .logo-icon {
+            width: 64px; height: 64px;
+            background: linear-gradient(135deg, var(--primary), var(--accent));
+            border-radius: 1.25rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.75rem;
+            color: white;
+            margin: 0 auto 1.25rem;
+            box-shadow: 0 10px 30px rgba(99,102,241,0.3);
+        }
+
+        .auth-card-top h1 {
+            font-size: clamp(1.5rem, 4vw, 2rem);
+            font-weight: 800;
+            letter-spacing: -0.03em;
+            margin-bottom: 0.4rem;
+        }
+
+        .auth-card-top p {
+            color: var(--text-muted);
+            font-size: 0.95rem;
+        }
+
+        .auth-form-card {
+            background: var(--glass-bg);
+            border: 1px solid var(--glass-border);
+            border-radius: 1.25rem;
+            backdrop-filter: blur(24px);
+            -webkit-backdrop-filter: blur(24px);
+            padding: clamp(1.5rem, 4vw, 2.25rem);
+            animation: fadeInUp 0.5s ease-out 0.1s both;
+        }
+
+        .auth-form-card .mb-3 {
+            margin-bottom: 1.1rem !important;
+        }
+
+        .auth-form-card .input-icon-wrapper {
+            position: relative;
+        }
+
+        .auth-form-card .input-icon-wrapper .input-icon {
+            position: absolute;
+            left: 1rem;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--text-muted);
+            font-size: 1rem;
+            pointer-events: none;
+            z-index: 3;
+        }
+
+        .auth-form-card .input-icon-wrapper .form-control {
+            padding-left: 2.75rem;
+        }
+
+        .auth-form-card .btn-submit {
+            width: 100%;
+            padding: 0.8rem;
+            font-size: 1rem;
+            font-weight: 700;
+            border-radius: 0.85rem;
+            margin-top: 0.5rem;
+            letter-spacing: -0.01em;
+        }
+
+        .auth-form-card .form-footer {
+            text-align: center;
+            margin-top: 1.25rem;
+            color: var(--text-muted);
+            font-size: 0.9rem;
+        }
+
+        .auth-form-card .form-footer a {
+            font-weight: 600;
+        }
+
+        .auth-top-right {
+            position: fixed;
+            top: 1rem;
+            right: 1rem;
+            z-index: 10;
+            display: flex;
+            gap: 0.5rem;
+            animation: fadeInUp 0.5s ease-out 0.2s both;
+        }
+
+        .auth-top-right .landing-theme-toggle {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 40px; height: 40px;
+            border-radius: 0.75rem;
+            border: 1px solid var(--border-subtle);
+            background: var(--glass-bg);
+            backdrop-filter: blur(12px);
+            color: var(--text-secondary);
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 1.1rem;
+            padding: 0;
+        }
+
+        .auth-top-right .landing-theme-toggle:hover {
+            background: var(--theme-toggle-hover);
+            color: var(--primary-light);
+            border-color: var(--primary);
+        }
+
+        .auth-top-right .btn-home {
+            display: flex;
+            align-items: center;
+            gap: 0.4rem;
+            padding: 0.5rem 1rem;
+            border-radius: 0.75rem;
+            font-size: 0.85rem;
+            font-weight: 500;
+            background: var(--glass-bg);
+            backdrop-filter: blur(12px);
+            border: 1px solid var(--glass-border);
+            color: var(--text-primary);
+            text-decoration: none;
+            transition: all 0.2s;
+        }
+
+        .auth-top-right .btn-home:hover {
+            border-color: var(--primary);
+            color: var(--primary-light);
+        }
+
+        .auth-form-card .password-toggle-wrapper {
+            position: relative;
+        }
+
+        .auth-form-card .password-toggle-wrapper .form-control {
+            padding-left: 2.75rem;
+            padding-right: 3rem;
+        }
+
+        .auth-form-card .password-toggle-wrapper .input-icon {
+            position: absolute;
+            left: 1rem;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--text-muted);
+            font-size: 1rem;
+            pointer-events: none;
+            z-index: 3;
+        }
+
+        .auth-form-card .password-toggle-wrapper .password-toggle-btn {
+            position: absolute;
+            right: 0.5rem;
+            top: 50%;
+            transform: translateY(-50%);
+            border: none;
+            background: transparent;
+            color: var(--text-muted);
+            cursor: pointer;
+            font-size: 1.1rem;
+            padding: 0.4rem;
+            border-radius: 0.5rem;
+            transition: color 0.2s;
+            z-index: 3;
+        }
+
+        .auth-form-card .password-toggle-wrapper .password-toggle-btn:hover {
+            color: var(--primary-light);
+        }
+
+        .form-label {
+            font-weight: 500;
+            margin-bottom: 0.35rem;
+        }
+
+        /* Name field icon */
+        .auth-form-card .name-icon {
+            position: absolute;
+            left: 1rem;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--text-muted);
+            font-size: 1rem;
+            pointer-events: none;
+            z-index: 3;
+        }
+
+        @@media (max-width: 480px) {
+            .auth-fullpage {
+                padding: 1rem 0.75rem;
+                align-items: flex-start;
+                padding-top: 4rem;
+            }
+
+            .auth-form-card {
+                padding: 1.25rem;
+                border-radius: 1rem;
+            }
+
+            .auth-card-top .logo-icon {
+                width: 52px; height: 52px;
+                font-size: 1.5rem;
+                border-radius: 1rem;
+            }
+
+            .auth-top-right .btn-home span {
+                display: none;
+            }
+        }
+
+        @@media (prefers-reduced-motion: reduce) {
+            *, *::before, *::after {
+                animation-duration: 0.01ms !important;
+                transition-duration: 0.01ms !important;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="auth-top-right">
+        <a href="/" class="btn-home">
+            <i class="bi bi-arrow-left"></i>
+            <span>Home</span>
+        </a>
+        <button type="button" class="landing-theme-toggle" id="themeToggle" title="Toggle theme">
+            <i class="bi bi-moon-stars-fill" id="themeIcon"></i>
+        </button>
     </div>
-</div>
+
+    <section class="auth-fullpage">
+        <video class="auth-fullpage-video" autoplay muted loop playsinline>
+            <source src="~/videos/12145257_2160_3840_30fps.mp4" type="video/mp4" />
+        </video>
+        <div class="auth-fullpage-overlay"></div>
+
+        <div class="auth-card-wrapper">
+            <div class="auth-card-top">
+                <div class="logo-icon">
+                    <i class="bi bi-person-plus"></i>
+                </div>
+                <h1>Create Account</h1>
+                <p>Start your learning journey today</p>
+            </div>
+
+            <div class="auth-form-card">
+                @if (TempData["Error"] != null)
+                {
+                    <div class="alert alert-danger mb-3" style="font-size:0.85rem;">
+                        <i class="bi bi-exclamation-triangle me-2"></i>@TempData["Error"]
+                    </div>
+                }
+
+                <form asp-action="Register" method="post">
+                    <div class="mb-3">
+                        <label class="form-label">Full Name</label>
+                        <div class="input-icon-wrapper">
+                            <i class="bi bi-person input-icon"></i>
+                            <input type="text" name="FullName" class="form-control" required placeholder="John Doe" />
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Email Address</label>
+                        <div class="input-icon-wrapper">
+                            <i class="bi bi-envelope input-icon"></i>
+                            <input type="email" name="Email" class="form-control" required placeholder="you@example.com" />
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Password</label>
+                        <div class="password-toggle-wrapper">
+                            <i class="bi bi-lock input-icon"></i>
+                            <input type="password" name="Password" class="form-control" required minlength="6" placeholder="Min 6 characters" />
+                            <button type="button" class="password-toggle-btn" onclick="togglePassword(this)">
+                                <i class="bi bi-eye"></i>
+                            </button>
+                        </div>
+                    </div>
+                    <button type="submit" class="btn btn-primary btn-submit">
+                        <i class="bi bi-person-plus me-2"></i>Create Account
+                    </button>
+                </form>
+
+                <div class="form-footer">
+                    Already have an account?
+                    <a asp-action="Login">Sign in</a>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <script>
+        function togglePassword(btn) {
+            var input = btn.parentElement.querySelector('input');
+            var icon = btn.querySelector('i');
+            if (input.type === 'password') {
+                input.type = 'text';
+                icon.className = 'bi bi-eye-slash';
+            } else {
+                input.type = 'password';
+                icon.className = 'bi bi-eye';
+            }
+        }
+
+        (function() {
+            var STORAGE_KEY = 'studyplanner-theme';
+            var html = document.documentElement;
+            var themeToggle = document.getElementById('themeToggle');
+            var themeIcon = document.getElementById('themeIcon');
+            var saved = localStorage.getItem(STORAGE_KEY) || 'dark';
+            html.setAttribute('data-theme', saved);
+            html.setAttribute('data-bs-theme', saved);
+            updateIcon(saved);
+            themeToggle.addEventListener('click', function() {
+                var cur = html.getAttribute('data-theme');
+                var next = cur === 'dark' ? 'light' : 'dark';
+                html.setAttribute('data-theme', next);
+                html.setAttribute('data-bs-theme', next);
+                localStorage.setItem(STORAGE_KEY, next);
+                updateIcon(next);
+                themeIcon.style.transform = 'rotate(360deg)';
+                setTimeout(function() { themeIcon.style.transform = ''; }, 400);
+            });
+            function updateIcon(t) {
+                themeIcon.className = t === 'dark' ? 'bi bi-moon-stars-fill' : 'bi bi-sun-fill';
+            }
+        })();
+
+        document.body.style.opacity = '0';
+        document.body.style.transition = 'opacity 0.3s ease';
+        requestAnimationFrame(function() {
+            requestAnimationFrame(function() {
+                document.body.style.opacity = '1';
+            });
+        });
+    </script>
+</body>
+</html>

@@ -1,12 +1,14 @@
 using FluentValidation;
 using MediatR;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using StudyPlanner.Application.Commands.Categories;
 using StudyPlanner.Application.DTOs;
 using StudyPlanner.Application.Queries.Categories;
 
 namespace StudyPlanner.Web.Controllers;
-public class CategoriesController : Controller
+[Authorize]
+public class CategoriesController : BaseController
 {
     private readonly IMediator _mediator;
     public CategoriesController(IMediator mediator) => _mediator = mediator;

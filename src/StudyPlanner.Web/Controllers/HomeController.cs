@@ -4,15 +4,16 @@ using StudyPlanner.Application.DTOs;
 using StudyPlanner.Application.Queries.Users;
 
 namespace StudyPlanner.Web.Controllers;
-public class HomeController : Controller
+public class HomeController : BaseController
 {
     private readonly IMediator _mediator;
     public HomeController(IMediator mediator) => _mediator = mediator;
     public async Task<IActionResult> Index()
     {
-        var userId = GetUserId();
-        var dashboard = await _mediator.Send(new GetDashboardQuery(userId));
+        if (!User.Identity?.IsAuthenticated ?? true)
+            return View("Landing");
+
+        var dashboard = await _mediator.Send(new GetDashboardQuery(GetUserId()));
         return View(dashboard);
     }
-    private static Guid GetUserId() => Guid.Parse("00000000-0000-0000-0000-000000000001");
 }
