@@ -16,7 +16,11 @@
     <configurations />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="1718f01c-863e-4bb2-9df7-1527db43aec2" name="Changes" comment="" />
+    <list default="true" id="1718f01c-863e-4bb2-9df7-1527db43aec2" name="Changes" comment="">
+      <change beforePath="$PROJECT_DIR$/.idea/.idea.StudyPlanner/.idea/indexLayout.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/.idea.StudyPlanner/.idea/indexLayout.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/.idea.StudyPlanner/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/.idea.StudyPlanner/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/StudyPlanner.Web/Views/Shared/_Layout.cshtml" beforeDir="false" afterPath="$PROJECT_DIR$/src/StudyPlanner.Web/Views/Shared/_Layout.cshtml" afterDir="false" />
+    </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
@@ -25,30 +29,50 @@
   <component name="CopilotPersistence">
     <persistenceIdMap>
       <entry key="_/Users/m/Desktop/NewFolder3/StudyPlanner" value="3GOEE2vo6nlupE2P3uGlmcvbbhr" />
+      <entry key="_/Users/m/RiderProjects/StudyPlannerProject/StudyPlanner" value="3GfumUkoiKLtTJhzXfRcRqqwB2O" />
     </persistenceIdMap>
   </component>
   <component name="DpaMonitoringSettings">
     <option name="firstShow" value="false" />
   </component>
+  <component name="Git.Settings">
+    <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
+  </component>
+  <component name="GitHubPullRequestSearchHistory">{
+  &quot;lastFilter&quot;: {
+    &quot;state&quot;: &quot;OPEN&quot;,
+    &quot;assignee&quot;: &quot;MehrasHmz&quot;
+  }
+}</component>
+  <component name="GithubPullRequestsUISettings">{
+  &quot;selectedUrlAndAccountId&quot;: {
+    &quot;url&quot;: &quot;git@github.com:MehrasHmz/StudyPlanner.git&quot;,
+    &quot;accountId&quot;: &quot;e4424149-3ca3-48e3-b7e9-1ea544b80280&quot;
+  }
+}</component>
+  <component name="McpProjectServerCommands">
+    <commands />
+    <urls />
+  </component>
   <component name="NextEditCompletionFeaturesState">
     <decayedCancelled>
       <entry key="MS100" value="1.0" />
       <entry key="MS500" value="1.0" />
-      <entry key="S2" value="1.0000000000084157" />
-      <entry key="S5" value="1.0000548093111803" />
-      <entry key="S10" value="1.0104202094439463" />
-      <entry key="S30" value="1.3463503930970018" />
-      <entry key="S60" value="1.8321753230866213" />
-      <entry key="M2" value="2.290054058389417" />
-      <entry key="M5" value="2.678253956427622" />
-      <entry key="M10" value="2.832075037708039" />
-      <entry key="M15" value="2.886421371248356" />
-      <entry key="M30" value="2.94238040103325" />
-      <entry key="H1" value="2.9709795822672693" />
-      <entry key="H2" value="2.985436750789386" />
-      <entry key="H4" value="2.9927050667766357" />
-      <entry key="D1" value="2.998782325243247" />
-      <entry key="W1" value="2.9998260010406788" />
+      <entry key="S2" value="1.0000121177390808" />
+      <entry key="S5" value="1.0432436827605587" />
+      <entry key="S10" value="1.7615342853509237" />
+      <entry key="S30" value="8.633884503659612" />
+      <entry key="S60" value="17.13778547630485" />
+      <entry key="M2" value="27.475633227517278" />
+      <entry key="M5" value="41.72490477855055" />
+      <entry key="M10" value="50.10283401492377" />
+      <entry key="M15" value="53.59804916522315" />
+      <entry key="M30" value="57.539678674279976" />
+      <entry key="H1" value="59.70001286022518" />
+      <entry key="H2" value="60.83188076627133" />
+      <entry key="H4" value="61.41132232377523" />
+      <entry key="D1" value="61.90123815813115" />
+      <entry key="W1" value="61.98587517534852" />
     </decayedCancelled>
     <decayedSelected>
       <entry key="MS100" value="0.0" />
@@ -70,23 +94,23 @@
       <entry key="W1" value="0.0" />
     </decayedSelected>
     <decayedShown>
-      <entry key="MS100" value="0.9395227492140118" />
-      <entry key="MS500" value="0.9876008614453725" />
-      <entry key="S2" value="0.9968856972287564" />
-      <entry key="S5" value="0.998807831294047" />
-      <entry key="S10" value="1.0097879078415246" />
-      <entry key="S30" value="1.3460464551535134" />
-      <entry key="S60" value="1.8319560004147142" />
-      <entry key="M2" value="2.2899126570677715" />
-      <entry key="M5" value="2.6781866317935332" />
-      <entry key="M10" value="2.832039242777486" />
-      <entry key="M15" value="2.8863970056457386" />
-      <entry key="M30" value="2.9423679596207677" />
-      <entry key="H1" value="2.9709732954762793" />
-      <entry key="H2" value="2.985433590690634" />
-      <entry key="H4" value="2.9927034825284924" />
-      <entry key="D1" value="2.9987820606167697" />
-      <entry key="W1" value="2.9998259632225412" />
+      <entry key="MS100" value="1.8145860519450682E-5" />
+      <entry key="MS500" value="0.11265630782635375" />
+      <entry key="S2" value="0.5793592227009318" />
+      <entry key="S5" value="0.8470200684903224" />
+      <entry key="S10" value="1.6574509615696755" />
+      <entry key="S30" value="8.59603472969773" />
+      <entry key="S60" value="17.117578885992483" />
+      <entry key="M2" value="27.46481017211358" />
+      <entry key="M5" value="41.720171274585034" />
+      <entry key="M10" value="50.100344554309125" />
+      <entry key="M15" value="53.59635493130149" />
+      <entry key="M30" value="57.538811911238035" />
+      <entry key="H1" value="59.69957406622713" />
+      <entry key="H2" value="60.83165994761583" />
+      <entry key="H4" value="61.41121155006686" />
+      <entry key="D1" value="61.90121964445769" />
+      <entry key="W1" value="61.98587252926923" />
     </decayedShown>
   </component>
   <component name="ProjectColorInfo">{
@@ -102,14 +126,18 @@
   &quot;keyToString&quot;: {
     &quot;.NET Launch Settings Profile.StudyPlanner.Api: http.executor&quot;: &quot;Run&quot;,
     &quot;ModuleVcsDetector.initialDetectionPerformed&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.MCP Project settings loaded&quot;: &quot;true&quot;,
     &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.TerminalTabsStorage.copyFrom.TerminalArrangementManager.252&quot;: &quot;true&quot;,
     &quot;RunOnceActivity.cidr.known.project.marker&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.git.unshallow&quot;: &quot;true&quot;,
     &quot;RunOnceActivity.readMode.enableVisualFormatting&quot;: &quot;true&quot;,
     &quot;RunOnceActivity.typescript.service.memoryLimit.init&quot;: &quot;true&quot;,
     &quot;cidr.known.project.marker&quot;: &quot;true&quot;,
     &quot;codeWithMe.voiceChat.enabledByDefault&quot;: &quot;false&quot;,
     &quot;com.intellij.ml.llm.matterhorn.ej.ui.settings.DefaultModelSelectionForGA.v1&quot;: &quot;true&quot;,
     &quot;copilot.chat.legacySessionMetadata.migrated&quot;: &quot;true&quot;,
+    &quot;git-widget-placeholder&quot;: &quot;master&quot;,
     &quot;junie.onboarding.icon.badge.shown&quot;: &quot;true&quot;,
     &quot;node.js.detected.package.eslint&quot;: &quot;true&quot;,
     &quot;node.js.detected.package.tslint&quot;: &quot;true&quot;,
@@ -214,6 +242,12 @@
       <workItem from="1784043072143" duration="151000" />
       <workItem from="1784043456787" duration="36000" />
       <workItem from="1784043714878" duration="29000" />
+      <workItem from="1784044741698" duration="1245000" />
+      <workItem from="1784050827227" duration="298000" />
+      <workItem from="1784051507189" duration="24000" />
+      <workItem from="1784051604028" duration="27000" />
+      <workItem from="1784051685867" duration="31000" />
+      <workItem from="1784375104768" duration="252000" />
     </task>
     <servers />
   </component>
