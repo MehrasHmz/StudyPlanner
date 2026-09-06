@@ -34,13 +34,39 @@ StudyPlanner.UnitTests     → Domain logic and algorithm tests
 
 ## Quick Start
 
-### Option 1: Docker (Recommended)
+### Docker Compose (recommended)
+
+Prerequisites: Docker Desktop (with Linux containers enabled) and Docker Compose v2.
+The images used here (`mcr.microsoft.com/dotnet/*:8.0` and `postgres:16-alpine`) support macOS ARM64 natively.
+
 ```bash
-docker-compose up -d
-# Open http://localhost:8080
+cp .env.example .env
+# Edit .env and set a local POSTGRES_PASSWORD.
+docker compose up --build -d
 ```
 
-### Option 2: Local Development
+The API is available at <http://localhost:8080> and Swagger at <http://localhost:8080/swagger>.
+Because the Compose environment uses `ASPNETCORE_ENVIRONMENT=Development`, the existing application startup code applies the checked-in EF Core migrations and enables Swagger. No migration files were changed.
+
+Stop the stack with `docker compose down`; database data remains in the `postgres_data` named volume. To remove the database volume as well (destructive), use `docker compose down -v`.
+
+Useful commands:
+
+```bash
+docker compose ps
+docker compose logs -f api
+docker compose logs -f postgres
+docker compose exec api dotnet --info
+docker compose exec postgres psql -U "$POSTGRES_USER" -d "$POSTGRES_DB"
+docker compose restart
+docker compose down
+docker compose down -v                         # reset database
+docker compose build --no-cache && docker compose up -d
+```
+
+Migrations are applied automatically on API startup in Development. To apply them manually instead, run the API with the same connection string and execute `dotnet ef database update` from the repository using the EF tooling; the Docker image intentionally contains only the ASP.NET Core runtime.
+
+### Local Development
 ```bash
 # 1. Start PostgreSQL (using Docker or local)
 docker run -d --name studyplanner-db -e POSTGRES_PASSWORD=postgres -e POSTGRES_DB=StudyPlanner -p 5432:5432 postgres:16-alpine
@@ -48,7 +74,7 @@ docker run -d --name studyplanner-db -e POSTGRES_PASSWORD=postgres -e POSTGRES_D
 # 2. Run the application
 dotnet run --project src/StudyPlanner.Web
 
-# 3. Open http://localhost:5000
+# 3. Open http://localhost:5274 (the launchSettings HTTP profile)
 ```
 
 ## Seed Data

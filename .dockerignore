@@ -1,0 +1,14 @@
+.git
+.gitignore
+.idea
+.vs
+.DS_Store
+**/bin
+**/obj
+**/TestResults
+**/*.user
+**/*.suo
+logs
+*.log
+docker-compose.override.yml
+README.md
