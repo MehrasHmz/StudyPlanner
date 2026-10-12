@@ -3,6 +3,12 @@
 .vs
 .DS_Store
 .env*
+.secrets
+keys
+**/*.pem
+**/*.key
+**/*.pfx
+**/*.p12
 **/bin
 **/obj
 **/TestResults
