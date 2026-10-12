@@ -33,6 +33,11 @@ public class User : AuditableEntity
         if (string.IsNullOrWhiteSpace(n)) throw new ArgumentException("Full name is required.");
         FullName = n.Trim();
     }
+    public void SetPasswordHash(string passwordHash)
+    {
+        if (string.IsNullOrWhiteSpace(passwordHash)) throw new ArgumentException("Password hash is required.");
+        PasswordHash = passwordHash;
+    }
     public void SetEmail(string e)
     {
         if (string.IsNullOrWhiteSpace(e) || !e.Contains('@')) throw new ArgumentException("Valid email is required.");

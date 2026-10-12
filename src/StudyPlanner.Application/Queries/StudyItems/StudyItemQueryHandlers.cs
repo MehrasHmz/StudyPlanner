@@ -10,7 +10,7 @@ public class GetStudyItemByIdHandler : IRequestHandler<GetStudyItemByIdQuery, St
     public async Task<StudyItemDto?> Handle(GetStudyItemByIdQuery r, CancellationToken ct)
     {
         var item = await _repo.GetWithDetailsAsync(r.Id, ct);
-        return item == null ? null : Map(item);
+        return item == null || r.UserId == Guid.Empty || item.UserId != r.UserId || item.IsDeleted ? null : Map(item);
     }
     private static StudyItemDto Map(Domain.Entities.StudyItem i) =>
         new(i.Id, i.Title, i.Description, i.Type, i.Difficulty, i.EstimatedDurationMinutes, i.Priority,

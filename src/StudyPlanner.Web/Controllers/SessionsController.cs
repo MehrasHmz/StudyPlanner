@@ -1,3 +1,4 @@
+using FluentValidation;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -31,18 +32,27 @@ public class SessionsController : BaseController
     [HttpPost]
     public async Task<IActionResult> CompleteSession(Guid SessionId, List<ItemResultDto> Results)
     {
+        if (!ModelState.IsValid) return BadRequest("Invalid session results.");
         try
         {
-            var validResults = Results.Where(r => r.StudyItemId != Guid.Empty && r.MinutesSpent > 0).ToList();
-            if (validResults.Any())
-            {
-                await _mediator.Send(new CompleteSessionCommand(SessionId, validResults));
-            }
+            await _mediator.Send(new CompleteSessionCommand(SessionId, GetUserId(), Results), HttpContext.RequestAborted);
             TempData["Success"] = "Session completed! Items marked as reviewed.";
         }
-        catch (Exception ex)
+        catch (KeyNotFoundException)
         {
-            TempData["Error"] = ex.Message;
+            return NotFound();
+        }
+        catch (ValidationException)
+        {
+            return BadRequest("Invalid session results.");
+        }
+        catch (SessionCompletionConflictException)
+        {
+            return Conflict("The session changed while being completed. Reload the session.");
+        }
+        catch (InvalidSessionCompletionException)
+        {
+            return BadRequest("Session cannot be completed with these results.");
         }
         return RedirectToAction(nameof(Index));
     }

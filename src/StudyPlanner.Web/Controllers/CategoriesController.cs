@@ -15,7 +15,7 @@ public class CategoriesController : BaseController
 
     public async Task<IActionResult> Index(int page = 1)
     {
-        var result = await _mediator.Send(new GetAllCategoriesQuery(page));
+        var result = await _mediator.Send(new GetAllCategoriesQuery(Math.Max(1, page), 12), HttpContext.RequestAborted);
         return View(result);
     }
 
@@ -27,8 +27,7 @@ public class CategoriesController : BaseController
 
     public async Task<IActionResult> Edit(Guid id)
     {
-        var cats = await _mediator.Send(new GetAllCategoriesQuery(1, 100));
-        var cat = cats.Items.FirstOrDefault(c => c.Id == id);
+        var cat = await _mediator.Send(new GetCategoryByIdQuery(id), HttpContext.RequestAborted);
         if (cat == null) return NotFound();
         ViewBag.Errors = new List<string>();
         return View(cat);
@@ -37,6 +36,7 @@ public class CategoriesController : BaseController
     [HttpPost]
     public async Task<IActionResult> Create(CreateCategoryCommand cmd)
     {
+        if (!ModelState.IsValid) return View(cmd);
         try
         {
             await _mediator.Send(cmd);
@@ -46,6 +46,7 @@ public class CategoriesController : BaseController
         catch (ValidationException ex)
         {
             ViewBag.Errors = ex.Errors.Select(e => e.ErrorMessage).ToList();
+            foreach (var error in ex.Errors) ModelState.AddModelError(error.PropertyName, error.ErrorMessage);
             return View(cmd);
         }
         catch (Exception ex)
@@ -58,6 +59,9 @@ public class CategoriesController : BaseController
     [HttpPost]
     public async Task<IActionResult> Edit(UpdateCategoryCommand cmd)
     {
+        var existing = await _mediator.Send(new GetCategoryByIdQuery(cmd.Id), HttpContext.RequestAborted);
+        if (existing == null) return NotFound();
+        if (!ModelState.IsValid) return View(existing);
         try
         {
             await _mediator.Send(cmd);
@@ -67,16 +71,13 @@ public class CategoriesController : BaseController
         catch (ValidationException ex)
         {
             ViewBag.Errors = ex.Errors.Select(e => e.ErrorMessage).ToList();
-            var cats = await _mediator.Send(new GetAllCategoriesQuery(1, 100));
-            var cat = cats.Items.FirstOrDefault(c => c.Id == cmd.Id);
-            return View(cat ?? new CategoryDto(cmd.Id, cmd.Name, cmd.Description));
+            foreach (var error in ex.Errors) ModelState.AddModelError(error.PropertyName, error.ErrorMessage);
+            return View(existing);
         }
         catch (Exception ex)
         {
             ViewBag.Errors = new List<string> { ex.Message };
-            var cats = await _mediator.Send(new GetAllCategoriesQuery(1, 100));
-            var cat = cats.Items.FirstOrDefault(c => c.Id == cmd.Id);
-            return View(cat);
+            return View(existing);
         }
     }
 

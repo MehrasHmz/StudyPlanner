@@ -1,0 +1,24 @@
+{
+  "version": 1,
+  "parameters": "--vulnerable --include-transitive",
+  "sources": [
+    "https://api.nuget.org/v3/index.json"
+  ],
+  "projects": [
+    {
+      "path": "/Users/m/RiderProjects/StudyPlannerProject/StudyPlanner/src/StudyPlanner.Domain/StudyPlanner.Domain.csproj"
+    },
+    {
+      "path": "/Users/m/RiderProjects/StudyPlannerProject/StudyPlanner/src/StudyPlanner.Application/StudyPlanner.Application.csproj"
+    },
+    {
+      "path": "/Users/m/RiderProjects/StudyPlannerProject/StudyPlanner/src/StudyPlanner.Infrastructure/StudyPlanner.Infrastructure.csproj"
+    },
+    {
+      "path": "/Users/m/RiderProjects/StudyPlannerProject/StudyPlanner/src/StudyPlanner.Web/StudyPlanner.Web.csproj"
+    },
+    {
+      "path": "/Users/m/RiderProjects/StudyPlannerProject/StudyPlanner/tests/StudyPlanner.UnitTests/StudyPlanner.UnitTests.csproj"
+    }
+  ]
+}

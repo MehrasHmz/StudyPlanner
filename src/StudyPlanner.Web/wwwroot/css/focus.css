@@ -1,0 +1,32 @@
+.focus-page .site-main { padding: 0; min-height: 100svh; }
+.focus-experience { min-height: 100svh; display: grid; grid-template-rows: auto 1fr auto; background: var(--bg-body); }
+.focus-experience[data-immersive="true"] { position: fixed; inset: 0; z-index: 1500; overflow: auto; }
+.focus-toolbar { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 24px 36px; }
+.focus-toolbar .navbar-brand { margin: 0; } .focus-label { font-size: 12px; font-weight: 500; color: var(--text-muted); border-left: 1px solid var(--border-subtle); margin-left: 5px; padding-left: 14px; }
+.focus-toolbar-actions { display: flex; gap: 8px; }
+.focus-stage { text-align: center; padding: 24px; display: flex; align-items: center; flex-direction: column; justify-content: center; }
+.focus-kicker { display: flex; align-items: center; gap: 9px; color: var(--text-muted); font-size: 12px; margin-bottom: 18px; }
+.focus-status-dot { width: 6px; height: 6px; background: var(--text-muted); border-radius: 50%; }
+[data-timer-status="running"] .focus-status-dot { background: var(--primary); } [data-timer-status="paused"] .focus-status-dot { background: var(--warning); }
+.focus-stage h1 { font-size: 42px; margin-bottom: 12px; } .focus-subtitle { color: var(--text-muted); font-size: 14px; margin-bottom: 26px; }
+.focus-task { display: flex; align-items: center; justify-content: center; gap: 12px; max-width: 700px; width: 100%; margin-bottom: 24px; }
+.focus-task h2 { font-size: 20px; margin: 0; overflow-wrap: anywhere; min-width: 0; } .focus-task .icon-button { border: none; color: var(--text-muted); }
+.timer-modes { display: flex; padding: 4px; gap: 4px; margin: 0; border: 1px solid var(--border-subtle); border-radius: 6px; }
+.timer-modes label { position: relative; margin: 0; cursor: pointer; }
+.timer-modes input { position: absolute; opacity: 0; width: 1px; height: 1px; }
+.timer-modes span { display: flex; align-items: center; gap: 8px; padding: 10px 20px; border-radius: 4px; font-size: 13px; color: var(--text-muted); }
+.timer-modes input:checked + span { background: var(--bg-hover); color: var(--text-primary); } .timer-modes input:focus-visible + span { outline: 3px solid var(--primary); outline-offset: 2px; }
+.focus-timer { font-size: 104px; font-weight: 350; font-variant-numeric: tabular-nums; line-height: 1.2; margin: 26px 0 18px; width: 100%; max-width: 700px; }
+.focus-progress { width: min(360px, 100%); height: 3px; appearance: none; border: none; background: var(--border-subtle); color: var(--primary); margin-bottom: 24px; }
+.focus-progress::-webkit-progress-bar { background: var(--border-subtle); } .focus-progress::-webkit-progress-value { background: var(--primary); } .focus-progress::-moz-progress-bar { background: var(--primary); }
+.duration-controls { display: flex; align-items: center; justify-content: center; flex-wrap: wrap; gap: 20px; margin-bottom: 28px; }
+.duration-presets { display: flex; gap: 8px; } .duration-presets button { border: 1px solid var(--border-subtle); color: var(--text-muted); background: transparent; border-radius: 5px; min-height: 40px; min-width: 65px; padding: 8px 12px; font-size: 12px; }
+.duration-presets button[aria-pressed="true"] { color: var(--primary); border-color: var(--primary); }
+.custom-duration { display: flex; align-items: center; gap: 7px; color: var(--text-muted); font-size: 12px; } .custom-duration input { width: 64px; min-height: 40px; background: var(--bg-body); color: var(--text-primary); border: 1px solid var(--border-subtle); border-radius: 5px; padding: 6px; }
+.focus-controls { display: flex; gap: 12px; align-items: center; } .focus-controls .btn { min-width: 170px; min-height: 48px; } .focus-controls .icon-button { height: 48px; width: 48px; }
+.focus-completion { margin: 20px 0 0; color: var(--primary); font-size: 14px; } .focus-notice { font-size: 12px; color: var(--warning); min-height: 20px; margin: 16px 0 0; }
+.focus-footer { display: flex; justify-content: space-between; flex-wrap: wrap; gap: 16px; color: var(--text-muted); font-size: 11px; padding: 22px 36px; }
+.focus-footer > div { display: flex; align-items: center; gap: 18px; } .clock-toggle { display: inline-flex; align-items: center; gap: 7px; } .clock-toggle input { accent-color: var(--primary); } #localClock { min-width: 70px; font-variant-numeric: tabular-nums; }
+@media (max-width: 768px) { .focus-stage h1 { font-size: 34px; } .focus-timer { font-size: 80px; } .focus-toolbar, .focus-footer { padding-inline: 24px; } }
+@media (max-width: 480px) { .focus-toolbar { padding: 16px; flex-wrap: wrap; } .focus-toolbar .navbar-brand { font-size: 15px; } .focus-label { display: none; } .focus-toolbar-actions { gap: 4px; } .focus-toolbar-actions .icon-button { width: 40px; height: 40px; flex-basis: 40px; } .focus-stage { padding: 22px 16px; } .focus-stage h1 { font-size: 28px; } .focus-subtitle { max-width: 290px; } .focus-timer { font-size: 54px; margin-top: 24px; } .focus-task h2 { font-size: 18px; } .timer-modes span { padding-inline: 14px; } .focus-footer { justify-content: center; text-align: center; padding: 16px; } }
+@media (max-height: 650px) and (min-width: 769px) { .focus-toolbar { padding-block: 12px; } .focus-stage { padding-block: 12px; } .focus-stage h1 { font-size: 30px; } .focus-timer { font-size: 72px; margin-block: 16px; } .focus-subtitle, .focus-task { margin-bottom: 12px; } .focus-footer { padding-block: 12px; } }

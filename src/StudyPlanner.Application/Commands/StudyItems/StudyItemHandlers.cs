@@ -9,7 +9,7 @@ public class CreateStudyItemHandler : IRequestHandler<CreateStudyItemCommand, Gu
     public CreateStudyItemHandler(IStudyItemRepository repo) => _repo = repo;
     public async Task<Guid> Handle(CreateStudyItemCommand r, CancellationToken ct)
     {
-        var item = new StudyItem(r.Title, r.Description, r.Type, r.Difficulty, r.EstimatedDurationMinutes,
+        var item = new StudyItem(r.Title, r.Description ?? string.Empty, r.Type, r.Difficulty, r.EstimatedDurationMinutes,
             r.Priority, r.CategoryId, r.UserId, r.NextReviewDate);
         await _repo.AddAsync(item, ct);
         await _repo.SaveChangesAsync(ct);
@@ -22,9 +22,11 @@ public class UpdateStudyItemHandler : IRequestHandler<UpdateStudyItemCommand>
     public UpdateStudyItemHandler(IStudyItemRepository repo) => _repo = repo;
     public async Task Handle(UpdateStudyItemCommand r, CancellationToken ct)
     {
-        var item = await _repo.GetByIdAsync(r.Id, ct) ?? throw new KeyNotFoundException("Study item not found.");
+        var item = await _repo.GetByIdAsync(r.Id, ct);
+        if (item == null || r.UserId == Guid.Empty || item.UserId != r.UserId || item.IsDeleted)
+            throw new KeyNotFoundException("Study item not found.");
         item.SetTitle(r.Title);
-        item.SetDescription(r.Description);
+        item.SetDescription(r.Description ?? string.Empty);
         item.UpdateType(r.Type);
         item.UpdateDifficulty(r.Difficulty);
         item.SetEstimatedDurationMinutes(r.EstimatedDurationMinutes);
@@ -42,7 +44,9 @@ public class DeleteStudyItemHandler : IRequestHandler<DeleteStudyItemCommand>
     public DeleteStudyItemHandler(IStudyItemRepository repo) => _repo = repo;
     public async Task Handle(DeleteStudyItemCommand r, CancellationToken ct)
     {
-        var item = await _repo.GetByIdAsync(r.Id, ct) ?? throw new KeyNotFoundException("Study item not found.");
+        var item = await _repo.GetByIdAsync(r.Id, ct);
+        if (item == null || r.UserId == Guid.Empty || item.UserId != r.UserId || item.IsDeleted)
+            throw new KeyNotFoundException("Study item not found.");
         item.SoftDelete();
         _repo.Update(item);
         await _repo.SaveChangesAsync(ct);
@@ -54,7 +58,9 @@ public class ToggleCompleteHandler : IRequestHandler<ToggleCompleteCommand>
     public ToggleCompleteHandler(IStudyItemRepository repo) => _repo = repo;
     public async Task Handle(ToggleCompleteCommand r, CancellationToken ct)
     {
-        var item = await _repo.GetByIdAsync(r.Id, ct) ?? throw new KeyNotFoundException("Study item not found.");
+        var item = await _repo.GetByIdAsync(r.Id, ct);
+        if (item == null || r.UserId == Guid.Empty || item.UserId != r.UserId || item.IsDeleted)
+            throw new KeyNotFoundException("Study item not found.");
         if (item.IsCompleted) item.MarkIncomplete(); else item.MarkCompleted();
         item.Touch();
         _repo.Update(item);

@@ -14,3 +14,13 @@ public class GetAllCategoriesHandler : IRequestHandler<GetAllCategoriesQuery, Pa
         return new PaginatedResult<CategoryDto>(cats.Select(c => new CategoryDto(c.Id, c.Name, c.Description)).ToList(), total, r.Page, r.PageSize);
     }
 }
+public class GetCategoryByIdHandler : IRequestHandler<GetCategoryByIdQuery, CategoryDto?>
+{
+    private readonly ICategoryRepository _repo;
+    public GetCategoryByIdHandler(ICategoryRepository repo) => _repo = repo;
+    public async Task<CategoryDto?> Handle(GetCategoryByIdQuery request, CancellationToken ct)
+    {
+        var category = await _repo.GetByIdAsync(request.Id, ct);
+        return category == null || category.IsDeleted ? null : new CategoryDto(category.Id, category.Name, category.Description);
+    }
+}

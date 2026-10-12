@@ -1,140 +1,90 @@
-# StudyPlanner - Enterprise Study Management Application
+# StudyPlanner
 
-A production-ready ASP.NET Core MVC + Web API application for managing learning activities, built with Onion Architecture and .NET 8.
+ASP.NET Core 8 Razor MVC study planner with PostgreSQL, EF Core, MediatR and FluentValidation. The application includes authenticated study-item management, shared categories, session planning and completion, and a browser-local Focus timer. Onion Architecture is preserved.
 
-## Features
+## Docker Quick Start
 
-### MVC User Interface (Bootstrap 5)
-- **Dashboard** - Key statistics, recent items, quick actions
-- **Study Items** - Full CRUD with search, sort, pagination, filtering
-- **Categories** - Category management with card-based layout
-- **Session Planner** - Spaced Repetition algorithm for intelligent session planning
-- **Authentication** - Login and registration views
+Docker Desktop (Linux containers) and Docker Compose v2 are required. ARM64 macOS and AMD64 Linux are supported by the upstream .NET/PostgreSQL images; verify the image on your target architecture before deployment.
 
-### REST API
-- Swagger/OpenAPI documentation
-- JSON endpoints for programmatic access
-
-### Core Architecture
-- **Onion Architecture** with strict dependency inversion
-- **CQRS** pattern using MediatR
-- **FluentValidation** pipeline behavior
-- **Entity Framework Core** with PostgreSQL
-- **Serilog** structured logging
-
-## Architecture
-
-```
-StudyPlanner.Domain        → Entities, Enums, Interfaces, Domain Services
-StudyPlanner.Application   → DTOs, Commands/Queries, Validators, Mappings
-StudyPlanner.Infrastructure → EF Core, Repositories, Seed Data
-StudyPlanner.Web           → MVC Controllers, Razor Views, API Controllers
-StudyPlanner.UnitTests     → Domain logic and algorithm tests
-```
-
-## Quick Start
-
-### Docker Compose (recommended)
-
-Prerequisites: Docker Desktop (with Linux containers enabled) and Docker Compose v2.
-The images used here (`mcr.microsoft.com/dotnet/*:8.0` and `postgres:16-alpine`) support macOS ARM64 natively.
-
-```bash
+```sh
 cp .env.example .env
-# Edit .env and set a local POSTGRES_PASSWORD.
-docker compose up --build -d
+# Replace POSTGRES_PASSWORD in .env with a unique local password.
+docker compose config --quiet
+docker compose up --build -d --wait
 ```
 
-The API is available at <http://localhost:8080> and Swagger at <http://localhost:8080/swagger>.
-Because the Compose environment uses `ASPNETCORE_ENVIRONMENT=Development`, the existing application startup code applies the checked-in EF Core migrations and enables Swagger. No migration files were changed.
+Open [StudyPlanner](http://localhost:8080). Set APP_PORT in .env if the port is occupied. The listener is loopback-only. PostgreSQL has no exposed host port.
 
-Stop the stack with `docker compose down`; database data remains in the `postgres_data` named volume. To remove the database volume as well (destructive), use `docker compose down -v`.
+Compose starts PostgreSQL, waits for its health check, runs the one-shot `migrate` service, and starts `api` only after migration succeeds. Production is the default ASP.NET environment; Swagger is enabled only in Development. The runtime image runs as non-root, with a read-only root filesystem, dropped capabilities and writable volumes limited to logs and Data Protection keys.
 
-Useful commands:
-
-```bash
-docker compose ps
+```sh
+docker compose ps --all
 docker compose logs -f api
-docker compose logs -f postgres
-docker compose exec api dotnet --info
-docker compose exec postgres psql -U "$POSTGRES_USER" -d "$POSTGRES_DB"
-docker compose restart
+docker compose logs migrate
+docker compose exec api id
+curl --fail http://localhost:8080/health/ready
+docker compose restart api
 docker compose down
-docker compose down -v                         # reset database
-docker compose build --no-cache && docker compose up -d
 ```
 
-Migrations are applied automatically on API startup in Development. To apply them manually instead, run the API with the same connection string and execute `dotnet ef database update` from the repository using the EF tooling; the Docker image intentionally contains only the ASP.NET Core runtime.
+`docker compose down` retains database, logs and key volumes. Do not use `down --volumes` against data you need. Back up the database before migrations or upgrades. A changed POSTGRES_PASSWORD in .env does not automatically rotate the password of an existing database volume.
 
-### Local Development
-```bash
-# 1. Start PostgreSQL (using Docker or local)
-docker run -d --name studyplanner-db -e POSTGRES_PASSWORD=postgres -e POSTGRES_DB=StudyPlanner -p 5432:5432 postgres:16-alpine
+Health endpoints: `/health/live` checks application availability; `/health/ready` checks database connectivity and returns 503 on failure without exception details. Readiness is not a schema-version check.
 
-# 2. Run the application
+## Configuration and Secrets
+
+Real credentials are not checked into appsettings. Configure `ConnectionStrings__DefaultConnection` through the environment or your secret manager. Compose reads its local password from ignored .env; local environment variables are not a substitute for a production secret manager.
+
+Data Protection keys are mounted at `/app/keys`; retaining this volume preserves authentication and antiforgery cryptographic keys across container replacement. The local volume is not encrypted by the application. Protect it and database backups at the host level.
+
+The existing initial migration includes a **demo account** (`demo@studyplanner.com` / `password123`) and sample records. Never expose a newly migrated database publicly until demo credentials and sample data have been handled through an approved procedure. This setup is a verified local container workflow, not a declaration that internet-facing production deployment is fully hardened. Production also requires HTTPS/reverse-proxy configuration, trusted forwarding, backup/restore policy, runtime patching and secret/key protection.
+
+## Local Development
+
+Install a stable .NET 8 SDK. global.json permits compatible .NET 8 feature-band roll-forward; it does not opt into prerelease or .NET 9/10 SDKs.
+
+Start an isolated PostgreSQL server, configure the connection, then run:
+
+```sh
+export ConnectionStrings__DefaultConnection='Host=localhost;Port=5432;Database=StudyPlannerDev;Username=your_user;Password=your_local_password'
+dotnet restore StudyPlanner.sln
 dotnet run --project src/StudyPlanner.Web
-
-# 3. Open http://localhost:5274 (the launchSettings HTTP profile)
 ```
 
-## Seed Data
+The Development startup applies the existing migrations. In Production, apply migrations separately:
 
-The application includes seed data:
-- **Demo User**: demo@studyplanner.com / password123
-- **Categories**: Vocabulary, Programming, Algorithms
-- **Study Items**: 4 sample items across different types
-
-## API Endpoints
-
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| GET | `/` | Dashboard |
-| GET | `/StudyItems` | List all study items |
-| GET | `/StudyItems/Create` | Create form |
-| GET | `/Categories` | List categories |
-| GET | `/Sessions` | Session planner |
-| GET | `/Auth/Login` | Login page |
-| GET | `/Auth/Register` | Registration page |
-| GET | `/swagger` | API documentation |
-| GET | `/api/categories/list` | Categories JSON API |
-
-## Session Planning Algorithm
-
-The Session Planner uses a **Spaced Repetition + Greedy** algorithm:
-1. Scores items based on: priority, difficulty weight, and days overdue
-2. Sorts by score descending
-3. Greedily selects items that fit within available time
-4. Ensures no items exceed the time budget
-
-## Running Tests
-
-```bash
-dotnet test
+```sh
+dotnet run --project src/StudyPlanner.Web -- --migrate-only
 ```
 
-## Docker Commands
+No migration is generated or rewritten by Docker. Inspect migration logs and stop on failure.
 
-```bash
-make docker-up      # Start services
-make docker-down    # Stop services
-make build          # Build solution
-make run            # Run locally
-make test           # Run tests
-make clean          # Clean artifacts
+## Tests
+
+```sh
+dotnet build StudyPlanner.sln -c Release
+dotnet test StudyPlanner.sln -c Release
+node --test tests/frontend/focus-timer.test.cjs
 ```
 
-## Technology Stack
+Real PostgreSQL tests require `STUDYPLANNER_TEST_POSTGRES` pointing to an explicitly disposable PostgreSQL server with permission to create/drop databases. The fixtures create unpredictable test database names and remove only those databases. Without this variable, PostgreSQL declarations are skipped.
 
-- .NET 8
-- ASP.NET Core MVC
-- Entity Framework Core 8
-- PostgreSQL 16
-- Bootstrap 5.3
-- MediatR (CQRS)
-- FluentValidation
-- Serilog
-- xUnit
+Browser scripts in `tests/frontend` require Playwright and installed Chrome and create synthetic accounts/items. Their default port 5815 is intended for an isolated preview, not a database containing real user data.
 
-## License
+## Continuous Integration
 
-MIT License
+`.github/workflows/ci.yml` runs on pull requests and pushes to master/main. It performs vulnerability-audited restore, Release build, .NET tests with a real disposable PostgreSQL service, timer tests, Docker build and Compose smoke checks. Test results are retained as artifacts. Actions are pinned to verified commit SHAs; Dependabot checks NuGet, Docker and action updates weekly. The workflow has read-only repository permissions and does not publish images or deploy.
+
+The workflow must run on GitHub after an authorized push to establish a hosted CI result; adding the workflow locally is not proof of remote execution.
+
+## Repository Hygiene
+
+.env files, build outputs, keys, logs, node_modules and personal IDE state are excluded. Keep .env.example as a placeholder template only. Existing phase reports/evidence describe historical verification dates; the current Docker/Git report records this work.
+
+Git operations do not automatically imply release, push, registry publication or deployment. Review staged changes and credentials before publishing.
+
+## Make Targets
+
+`make build`, `make run`, `make test`, `make docker-up`, `make docker-down`, `make docker-logs`, `make docker-check`, `make clean`.
+
+The clean target uses dotnet clean; it does not recursively delete arbitrary directories.

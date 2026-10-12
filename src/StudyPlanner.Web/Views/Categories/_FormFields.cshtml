@@ -1,0 +1,5 @@
+@model StudyPlanner.Web.Models.CategoryFormViewModel
+<fieldset class="editor-section"><legend><i class="bi bi-folder2" aria-hidden="true"></i>Category details</legend>
+    <div class="mb-4"><div class="field-caption"><label class="form-label" for="Name">Category name</label><output class="character-count" data-count-for="Name"></output></div><input asp-for="Name" class="form-control" required maxlength="100" placeholder="Computer networks" /><span asp-validation-for="Name" class="field-error"></span></div>
+    <div><div class="field-caption"><label class="form-label" for="Description">Scope &amp; topics <span class="optional-label">Optional</span></label><output class="character-count" data-count-for="Description"></output></div><textarea asp-for="Description" class="form-control" rows="5" maxlength="500" placeholder="Routing, transport protocols, network security, and lab exercises"></textarea><span asp-validation-for="Description" class="field-error"></span></div>
+</fieldset>

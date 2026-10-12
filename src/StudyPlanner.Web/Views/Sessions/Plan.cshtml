@@ -1,88 +1,22 @@
 @model StudyPlanner.Application.DTOs.StudySessionDto
-@{ ViewData["Title"] = "Planned Session"; }
-
-<div class="container py-4">
-    <div class="section-header">
-        <h2><i class="bi bi-calendar-check"></i>Planned Session</h2>
-        <a asp-action="Index" class="btn btn-outline-primary"><i class="bi bi-arrow-left me-1"></i>Back</a>
-    </div>
-
-    <div class="row justify-content-center">
-        <div class="col-lg-8">
-            <div class="card mb-4">
-                <div class="card-body">
-                    <div class="row text-center g-3">
-                        <div class="col-md-3">
-                            <div class="stat-label mb-1">Available</div>
-                            <div class="stat-value text-primary">@Model.AvailableMinutes<span class="fs-6 fw-normal"> min</span></div>
-                        </div>
-                        <div class="col-md-3">
-                            <div class="stat-label mb-1">Planned</div>
-                            <div class="stat-value text-success">@Model.TotalPlannedMinutes<span class="fs-6 fw-normal"> min</span></div>
-                        </div>
-                        <div class="col-md-3">
-                            <div class="stat-label mb-1">Items</div>
-                            <div class="stat-value">@Model.TotalPlannedItems</div>
-                        </div>
-                        <div class="col-md-3">
-                            <div class="stat-label mb-1">Status</div>
-                            <span class="badge bg-info mt-2" style="font-size: 0.9rem; padding: 0.5em 1em;">@Model.Status</span>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            @if (Model.Items.Any())
+@{ ViewData["Title"] = "Planned session"; var ordered = Model.Items.OrderBy(item => item.Order).ToList(); }
+<div class="container">
+    <header class="page-heading"><div><div class="eyebrow">Your study plan</div><h1>One session, clear priorities.</h1></div><a class="btn btn-outline-secondary" asp-action="Index"><i class="bi bi-arrow-left" aria-hidden="true"></i>Back</a></header>
+    <section class="session-overview" aria-label="Session overview"><div><span class="text-muted">Available</span><strong>@Model.AvailableMinutes min</strong></div><div><span class="text-muted">Planned</span><strong>@Model.TotalPlannedMinutes min</strong></div><div><span class="text-muted">Items</span><strong>@Model.TotalPlannedItems</strong></div><div><span class="text-muted">Status</span><strong>@Model.Status</strong></div></section>
+    @if (ordered.Any())
+    {
+        <form asp-action="CompleteSession" method="post" data-confirm="Complete this session with the recorded results?">
+            <input type="hidden" name="SessionId" value="@Model.Id" />
+            @for (var index = 0; index < ordered.Count; index++)
             {
-                <div class="card mb-4">
-                    <div class="card-header">
-                        <h5 class="mb-0">Planned Items (in order)</h5>
-                    </div>
-                    <div class="card-body p-0">
-                        <div class="table-responsive">
-                            <table class="table table-hover mb-0">
-                                <thead>
-                                    <tr>
-                                        <th>#</th>
-                                        <th>Item</th>
-                                        <th>Minutes</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    @foreach (var item in Model.Items.OrderBy(i => i.Order))
-                                    {
-                                        <tr>
-                                            <td><span class="badge bg-primary rounded-pill">@item.Order</span></td>
-                                            <td class="fw-semibold">@item.StudyItemTitle</td>
-                                            <td>@item.PlannedMinutes min</td>
-                                        </tr>
-                                    }
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
-                </div>
-
-                <form asp-action="CompleteSession" method="post">
-                    <input type="hidden" name="SessionId" value="@Model.Id" />
-                    @foreach (var item in Model.Items.OrderBy(i => i.Order))
-                    {
-                        <input type="hidden" name="Results[@(item.Order-1)].StudyItemId" value="@item.StudyItemId" />
-                        <input type="hidden" name="Results[@(item.Order-1)].MinutesSpent" value="@item.PlannedMinutes" />
-                        <input type="hidden" name="Results[@(item.Order-1)].Score" value="" />
-                        <input type="hidden" name="Results[@(item.Order-1)].Notes" value="" />
-                    }
-                    <button type="submit" class="btn btn-success btn-lg w-100" onclick="return confirm('Mark all items as completed?')">
-                        <i class="bi bi-check-circle me-2"></i>Complete Entire Session
-                    </button>
-                </form>
+                var item = ordered[index];
+                <section class="session-result"><div class="section-title"><h3>@item.Order. @item.StudyItemTitle</h3><a class="icon-button" asp-controller="Focus" asp-action="Index" asp-route-itemId="@item.StudyItemId" title="Focus on @item.StudyItemTitle" aria-label="Focus on @item.StudyItemTitle"><i class="bi bi-bullseye" aria-hidden="true"></i></a></div>
+                    <input type="hidden" name="Results[@index].StudyItemId" value="@item.StudyItemId" />
+                    <div class="session-result-fields"><div><label class="form-label" for="minutes-@index">Minutes studied</label><input id="minutes-@index" type="number" name="Results[@index].MinutesSpent" value="@item.PlannedMinutes" min="1" required class="form-control" /></div><div><label class="form-label" for="score-@index">Score (optional)</label><input id="score-@index" type="number" name="Results[@index].Score" min="0" max="1" step="0.01" class="form-control" /></div><div><label class="form-label" for="notes-@index">Notes (optional)</label><input id="notes-@index" name="Results[@index].Notes" class="form-control" maxlength="1000" /></div></div>
+                </section>
             }
-            else
-            {
-                <div class="alert alert-info text-center">
-                    <i class="bi bi-info-circle me-2"></i>No items fit within the available time. Try adding more study items or increasing your available time.
-                </div>
-            }
-        </div>
-    </div>
+            <button class="btn btn-primary mt-4" type="submit"><i class="bi bi-check-circle" aria-hidden="true"></i>Complete session</button>
+        </form>
+    }
+    else { <div class="empty-state"><i class="bi bi-calendar d-block" aria-hidden="true"></i><h3>No items fit this session.</h3><div class="page-actions justify-content-center"><a class="btn btn-primary" asp-controller="StudyItems" asp-action="Create">Add study item</a><a class="btn btn-outline-secondary" asp-action="Index">Change duration</a></div></div> }
 </div>

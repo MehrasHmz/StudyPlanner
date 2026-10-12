@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using StudyPlanner.Application.Commands.Sessions;
 using StudyPlanner.Domain.Common;
 using StudyPlanner.Domain.Entities;
 using StudyPlanner.Domain.Interfaces;
@@ -62,6 +63,25 @@ public class StudyItemRepository : Repository<StudyItem>, IStudyItemRepository
 public class StudySessionRepository : Repository<StudySession>, IStudySessionRepository
 {
     public StudySessionRepository(AppDbContext ctx) : base(ctx) { }
+    public override async Task<int> SaveChangesAsync(CancellationToken ct = default)
+    {
+        try
+        {
+            // EF's transaction covers the conditional session update, items and progress together.
+            return await base.SaveChangesAsync(ct);
+        }
+        catch (DbUpdateConcurrencyException ex) when (ex.Entries.Any(entry => entry.Entity is StudySession))
+        {
+            _ctx.ChangeTracker.Clear();
+            throw new SessionCompletionConflictException(ex);
+        }
+        catch
+        {
+            // A failed request must not leave pending mutations that a later save could persist.
+            _ctx.ChangeTracker.Clear();
+            throw;
+        }
+    }
     public async Task<IReadOnlyList<StudySession>> GetByUserIdAsync(Guid userId, CancellationToken ct = default) =>
         await _ctx.StudySessions.AsNoTracking().Where(s => s.UserId == userId).OrderByDescending(s => s.PlannedDate).ToListAsync(ct);
     public async Task<StudySession?> GetWithItemsAsync(Guid id, CancellationToken ct = default) =>

@@ -1,48 +1,44 @@
 @model StudyPlanner.Application.DTOs.PaginatedResult<StudyPlanner.Application.DTOs.StudyItemDto>
 @{ ViewData["Title"] = "Study Items"; }
 
-<div class="container py-4">
+<div class="container py-4 study-items-page">
     <div class="section-header">
-        <h2><i class="bi bi-journal-text"></i>Study Items</h2>
-        <a asp-action="Create" class="btn btn-primary"><i class="bi bi-plus-circle me-2"></i>Add New</a>
+        <div><h2>Study Items</h2><p class="text-muted mb-0 mt-2">@Model.Total items</p></div>
+        <a asp-action="Create" class="btn btn-primary"><i class="bi bi-plus-lg" aria-hidden="true"></i>Add item</a>
     </div>
 
-    <div class="card mb-4">
-        <div class="card-body">
-            <form method="get" class="row g-3 align-items-end">
-                <div class="col-md-4">
-                    <label class="form-label">Search</label>
-                    <input type="text" name="search" value="@Context.Request.Query["search"]" class="form-control" placeholder="Search items..." />
+    <section class="item-filters" aria-label="Study item filters">
+            <form method="get" class="item-filter-grid">
+                <div>
+                    <label class="form-label" for="search">Search</label>
+                    <input type="text" name="search" id="search" value="@Context.Request.Query["search"]" class="form-control" placeholder="Search items..." />
                 </div>
-                <div class="col-md-2">
-                    <label class="form-label">Sort By</label>
-                    <select name="sortBy" class="form-select">
+                <div>
+                    <label class="form-label" for="sortBy">Sort By</label>
+                    <select name="sortBy" id="sortBy" class="form-select">
                         <option value="created" selected="@(Context.Request.Query["sortBy"]=="created")">Date Created</option>
                         <option value="title" selected="@(Context.Request.Query["sortBy"]=="title")">Title</option>
                         <option value="priority" selected="@(Context.Request.Query["sortBy"]=="priority")">Priority</option>
                         <option value="difficulty" selected="@(Context.Request.Query["sortBy"]=="difficulty")">Difficulty</option>
                     </select>
                 </div>
-                <div class="col-md-2">
-                    <label class="form-label">Order</label>
-                    <select name="desc" class="form-select">
+                <div>
+                    <label class="form-label" for="desc">Order</label>
+                    <select name="desc" id="desc" class="form-select">
                         <option value="true" selected="@(Context.Request.Query["desc"]=="true")">Descending</option>
                         <option value="false" selected="@(Context.Request.Query["desc"]!="true")">Ascending</option>
                     </select>
                 </div>
-                <div class="col-md-2">
-                    <button type="submit" class="btn btn-outline-primary w-100"><i class="bi bi-search me-1"></i>Filter</button>
+                <div>
+                    <button type="submit" class="btn btn-outline-primary w-100"><i class="bi bi-funnel" aria-hidden="true"></i>Filter</button>
                 </div>
             </form>
-        </div>
-    </div>
+    </section>
 
     @if (Model.Items.Any())
     {
-        <div class="card">
-            <div class="card-body p-0">
-                <div class="table-responsive">
-                    <table class="table table-hover mb-0">
+                <div class="table-responsive item-list" role="region" aria-label="Study items" tabindex="0">
+                    <table class="table table-hover mb-0 item-table">
                         <thead>
                             <tr>
                                 <th>Title</th>
@@ -52,14 +48,21 @@
                                 <th>Duration</th>
                                 <th>Review</th>
                                 <th>Status</th>
-                                <th></th>
+                                <th class="item-actions-heading">Actions</th>
                             </tr>
                         </thead>
                         <tbody>
                             @foreach (var item in Model.Items)
                             {
+                                var typeIcon = item.Type switch
+                                {
+                                    StudyPlanner.Domain.Enums.StudyItemType.Vocabulary => "book",
+                                    StudyPlanner.Domain.Enums.StudyItemType.Algorithm => "diagram-3",
+                                    StudyPlanner.Domain.Enums.StudyItemType.Programming => "code-slash",
+                                    _ => "journal-text"
+                                };
                                 <tr>
-                                    <td class="fw-semibold">@item.Title</td>
+                                    <td class="row-title"><div class="item-identity"><span class="item-kind-icon" aria-hidden="true"><i class="bi bi-@typeIcon"></i></span><div class="item-title-details"><span class="item-title">@item.Title</span><span class="item-category">@item.CategoryName</span></div></div></td>
                                     <td><span class="badge bg-secondary">@item.Type</span></td>
                                     <td>
                                         <span class="badge bg-@(item.Difficulty == StudyPlanner.Domain.Enums.DifficultyLevel.Advanced ? "danger" : item.Difficulty == StudyPlanner.Domain.Enums.DifficultyLevel.Intermediate ? "warning" : "success")">
@@ -70,19 +73,20 @@
                                     <td>@item.EstimatedDurationMinutes min</td>
                                     <td>@(item.NextReviewDate?.ToString("MMM dd") ?? "—")</td>
                                     <td>
-                                        <form asp-action="ToggleComplete" method="post" class="d-inline">
+                                        <form asp-action="ToggleComplete" method="post" class="item-status-form">
                                             <input type="hidden" name="id" value="@item.Id" />
-                                            <button type="submit" class="btn btn-sm @(item.IsCompleted ? "btn-success" : "btn-outline-success")">
-                                                <i class="bi @(item.IsCompleted ? "bi-check-circle-fill" : "bi-circle")"></i>
+                                            <button type="submit" class="item-status-toggle @(item.IsCompleted ? "is-complete" : "")" title="@(item.IsCompleted ? "Mark incomplete" : "Mark complete")" aria-pressed="@(item.IsCompleted ? "true" : "false")" aria-label="@(item.IsCompleted ? "Mark " + item.Title + " incomplete" : "Mark " + item.Title + " complete")">
+                                                <i class="bi @(item.IsCompleted ? "bi-check-circle-fill" : "bi-circle")" aria-hidden="true"></i><span>@(item.IsCompleted ? "Completed" : "Pending")</span>
                                             </button>
                                         </form>
                                     </td>
                                     <td>
-                                        <div class="btn-group btn-group-sm">
-                                            <a asp-action="Edit" asp-route-id="@item.Id" class="btn btn-outline-primary" title="Edit"><i class="bi bi-pencil"></i></a>
-                                            <form asp-action="Delete" method="post" class="d-inline" onsubmit="return confirm('Delete this item?')">
+                                        <div class="item-actions" role="group" aria-label="Actions for @item.Title">
+                                            <a asp-controller="Focus" asp-action="Index" asp-route-itemId="@item.Id" class="item-action" data-tooltip="Focus" title="Focus on @item.Title" aria-label="Focus on @item.Title"><i class="bi bi-bullseye" aria-hidden="true"></i></a>
+                                            <a asp-action="Edit" asp-route-id="@item.Id" class="item-action" data-tooltip="Edit" title="Edit @item.Title" aria-label="Edit @item.Title"><i class="bi bi-pencil" aria-hidden="true"></i></a>
+                                            <form asp-action="Delete" method="post" data-confirm="Delete this study item?">
                                                 <input type="hidden" name="id" value="@item.Id" />
-                                                <button type="submit" class="btn btn-outline-danger" title="Delete"><i class="bi bi-trash"></i></button>
+                                                <button type="submit" class="item-action item-action-danger" data-tooltip="Delete" title="Delete @item.Title" aria-label="Delete @item.Title"><i class="bi bi-trash" aria-hidden="true"></i></button>
                                             </form>
                                         </div>
                                     </td>
@@ -91,12 +95,10 @@
                         </tbody>
                     </table>
                 </div>
-            </div>
-        </div>
 
         @if (Model.TotalPages > 1)
         {
-            <nav class="mt-3">
+            <nav class="mt-3" aria-label="Study item pages">
                 <ul class="pagination justify-content-center">
                     @for (int i = 1; i <= Model.TotalPages; i++)
                     {

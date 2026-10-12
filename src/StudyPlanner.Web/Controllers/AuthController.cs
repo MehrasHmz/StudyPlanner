@@ -1,7 +1,9 @@
 using System.Security.Claims;
+using FluentValidation;
 using MediatR;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using StudyPlanner.Application.Commands.Users;
 
@@ -16,6 +18,12 @@ public class AuthController : Controller
 
     [HttpPost] public async Task<IActionResult> Login(LoginCommand cmd)
     {
+        ViewData["Email"] = cmd.Email;
+        if (!ModelState.IsValid)
+        {
+            TempData["Error"] = "Please enter a valid email and password.";
+            return View();
+        }
         try
         {
             var result = await _mediator.Send(cmd);
@@ -33,6 +41,11 @@ public class AuthController : Controller
             TempData["Success"] = $"Welcome back, {result.User.FullName}!";
             return RedirectToAction("Index", "Home");
         }
+        catch (ValidationException)
+        {
+            TempData["Error"] = "Please enter a valid email and password.";
+            return View();
+        }
         catch (UnauthorizedAccessException ex)
         {
             TempData["Error"] = ex.Message;
@@ -42,11 +55,23 @@ public class AuthController : Controller
 
     [HttpPost] public async Task<IActionResult> Register(RegisterCommand cmd)
     {
+        ViewData["Email"] = cmd.Email;
+        ViewData["FullName"] = cmd.FullName;
+        if (!ModelState.IsValid)
+        {
+            TempData["Error"] = "Please enter valid registration details.";
+            return View();
+        }
         try
         {
             await _mediator.Send(cmd);
             TempData["Success"] = "Account created successfully! Please sign in.";
             return RedirectToAction("Login");
+        }
+        catch (ValidationException)
+        {
+            TempData["Error"] = "Please enter valid registration details.";
+            return View();
         }
         catch (InvalidOperationException ex)
         {
@@ -55,6 +80,8 @@ public class AuthController : Controller
         }
     }
 
+    [Authorize]
+    [HttpPost]
     public async Task<IActionResult> Logout()
     {
         await HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);

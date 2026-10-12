@@ -9,7 +9,7 @@ public class CreateCategoryHandler : IRequestHandler<CreateCategoryCommand, Guid
     public CreateCategoryHandler(ICategoryRepository repo) => _repo = repo;
     public async Task<Guid> Handle(CreateCategoryCommand r, CancellationToken ct)
     {
-        var cat = new Category(r.Name, r.Description);
+        var cat = new Category(r.Name, r.Description ?? string.Empty);
         await _repo.AddAsync(cat, ct);
         await _repo.SaveChangesAsync(ct);
         return cat.Id;
@@ -23,7 +23,7 @@ public class UpdateCategoryHandler : IRequestHandler<UpdateCategoryCommand>
     {
         var cat = await _repo.GetByIdAsync(r.Id, ct) ?? throw new KeyNotFoundException("Category not found.");
         cat.SetName(r.Name);
-        cat.SetDescription(r.Description);
+        cat.SetDescription(r.Description ?? string.Empty);
         _repo.Update(cat);
         await _repo.SaveChangesAsync(ct);
     }

@@ -1,6 +1,7 @@
 using MediatR;
 using StudyPlanner.Application.DTOs;
 using StudyPlanner.Domain.Entities;
+using StudyPlanner.Domain.Enums;
 using StudyPlanner.Domain.Interfaces;
 
 namespace StudyPlanner.Application.Commands.Sessions;
@@ -41,12 +42,33 @@ public class CompleteSessionHandler : IRequestHandler<CompleteSessionCommand>
 
     public async Task Handle(CompleteSessionCommand r, CancellationToken ct)
     {
-        var session = await _sessionRepo.GetWithItemsAsync(r.SessionId, ct) ?? throw new KeyNotFoundException("Session not found.");
-        session.StartSession();
+        var session = await _sessionRepo.GetWithItemsAsync(r.SessionId, ct);
+        if (session == null || r.UserId == Guid.Empty || session.UserId != r.UserId)
+            throw new KeyNotFoundException("Session not found.");
+        if (session.Status != SessionStatus.Planned)
+            throw new InvalidSessionCompletionException("Only planned sessions can be completed.");
+        if (r.Results == null || r.Results.Count == 0 ||
+            r.Results.Any(result => result == null || result.StudyItemId == Guid.Empty || result.MinutesSpent <= 0) ||
+            r.Results.Select(result => result.StudyItemId).Distinct().Count() != r.Results.Count)
+            throw new InvalidSessionCompletionException("Invalid session results.");
+
+        // Validate the entire request before changing any tracked entity or adding progress.
+        var sessionItemIds = session.SessionItems.Select(item => item.StudyItemId).ToHashSet();
+        var items = new List<(ItemResultDto Result, StudyItem Item)>();
         foreach (var result in r.Results)
         {
-            var item = await _itemRepo.GetByIdAsync(result.StudyItemId, ct) ?? throw new KeyNotFoundException("Item not found.");
-            await _progressRepo.AddAsync(new ProgressRecord(session.UserId, result.StudyItemId, result.MinutesSpent, session.Id, result.Score, result.Notes), ct);
+            if (!sessionItemIds.Contains(result.StudyItemId))
+                throw new InvalidSessionCompletionException("Invalid session results.");
+            var item = await _itemRepo.GetByIdAsync(result.StudyItemId, ct);
+            if (item == null || item.UserId != r.UserId || item.IsDeleted)
+                throw new InvalidSessionCompletionException("Invalid session results.");
+            items.Add((result, item));
+        }
+
+        session.StartSession();
+        foreach (var (result, item) in items)
+        {
+            await _progressRepo.AddAsync(new ProgressRecord(session.UserId, result.StudyItemId, result.MinutesSpent, session.Id, result.Score, result.Notes ?? string.Empty), ct);
             item.MarkCompleted();
             item.SetNextReviewDate(DateTime.UtcNow.AddDays(7));
             _itemRepo.Update(item);

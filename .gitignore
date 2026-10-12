@@ -6,3 +6,14 @@ logs/
 *.log
 .env
 .DS_Store
+.env.*
+!.env.example
+.idea/
+TestResults/
+*.trx
+!PHASE5_EVIDENCE/*.trx
+node_modules/
+*.pem
+*.key
+*.pfx
+*.p12

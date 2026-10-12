@@ -46,8 +46,9 @@ public class AppDbContext : DbContext
             new Category(cat2, "Programming", "Software development"),
             new Category(cat3, "Algorithms", "Data structures & algorithms"));
 
+        // Preserve the existing migration's demo hash; successful login upgrades it.
         mb.Entity<User>().HasData(new User(userId, "Demo User", "demo@studyplanner.com",
-            Convert.ToBase64String(System.Security.Cryptography.SHA256.HashData(System.Text.Encoding.UTF8.GetBytes("password123" + "StudyPlannerSalt2024")))));
+            "ijB+qBaQa257yaJeoHCrzR/fBHVJ4IHm+mpkiCk7GY0="));
 
         mb.Entity<StudyItem>().HasData(
             new StudyItem("Learn C# Basics", "Intro to C#", Domain.Enums.StudyItemType.Programming,

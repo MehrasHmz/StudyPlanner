@@ -1,42 +1,13 @@
-@model StudyPlanner.Application.DTOs.CategoryDto
-@{ ViewData["Title"] = "Edit Category"; var errors = ViewBag.Errors as List<string> ?? new(); }
-
-<div class="container py-4">
-    <div class="section-header">
-        <h2><i class="bi bi-pencil"></i>Edit Category</h2>
-    </div>
-
-    @if (errors.Any())
-    {
-        <div class="alert alert-danger">
-            <i class="bi bi-exclamation-triangle me-2"></i><strong>Please fix:</strong>
-            <ul class="mb-0 mt-1">
-                @foreach (var e in errors) { <li>@e</li> }
-            </ul>
-        </div>
-    }
-
-    <div class="row justify-content-center">
-        <div class="col-md-6">
-            <div class="card">
-                <div class="card-body p-4">
-                    <form asp-action="Edit" method="post">
-                        <input type="hidden" name="Id" value="@Model.Id" />
-                        <div class="mb-3">
-                            <label class="form-label">Name *</label>
-                            <input type="text" name="Name" value="@Model.Name" class="form-control" required maxlength="100" />
-                        </div>
-                        <div class="mb-4">
-                            <label class="form-label">Description</label>
-                            <textarea name="Description" class="form-control" rows="3" maxlength="500">@Model.Description</textarea>
-                        </div>
-                        <div class="d-flex gap-2">
-                            <button type="submit" class="btn btn-primary"><i class="bi bi-check-circle me-1"></i>Save</button>
-                            <a asp-action="Index" class="btn btn-outline-secondary">Cancel</a>
-                        </div>
-                    </form>
-                </div>
-            </div>
-        </div>
-    </div>
+@model CategoryDto
+@{ ViewData["Title"] = "Edit Category"; }
+<div class="container editor-page category-editor">
+    <header class="page-heading"><div><div class="eyebrow">Shared study categories</div><h1>Edit Category</h1></div><a asp-action="Index" class="icon-button" title="Back to categories" aria-label="Back to categories"><i class="bi bi-arrow-left" aria-hidden="true"></i></a></header>
+    <form asp-action="Edit" method="post">
+        <input asp-for="Id" type="hidden" />
+        <div asp-validation-summary="All" class="validation-summary" role="alert" tabindex="-1" data-error-summary></div>
+        @if (ViewBag.Errors is List<string> errors && errors.Any() && ViewData.ModelState.IsValid) { <div class="alert alert-danger" role="alert">@string.Join(" ", errors)</div> }
+        @await Html.PartialAsync("_FormFields", new StudyPlanner.Web.Models.CategoryFormViewModel(Model.Name, Model.Description))
+        <div class="editor-actions"><button type="submit" class="btn btn-primary"><i class="bi bi-check-lg" aria-hidden="true"></i>Save category</button><a asp-action="Index" class="btn btn-outline-secondary">Cancel</a></div>
+    </form>
 </div>
+@section Scripts { <script src="~/js/study-forms.js" asp-append-version="true"></script> }

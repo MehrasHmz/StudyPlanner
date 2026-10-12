@@ -1,0 +1,29 @@
+@model StudyPlanner.Web.Models.StudyItemFormViewModel
+<div class="editor-columns">
+    <div>
+        <fieldset class="editor-section"><legend><i class="bi bi-journal-text" aria-hidden="true"></i>Study details</legend>
+            <div class="mb-4"><div class="field-caption"><label for="Title" class="form-label">Study title</label><output class="character-count" data-count-for="Title"></output></div><input asp-for="Title" class="form-control" maxlength="200" required placeholder="Review chapter 4: network protocols" /><span asp-validation-for="Title" class="field-error"></span></div>
+            <div class="mb-4"><div class="field-caption"><label for="Description" class="form-label">Objective &amp; notes <span class="optional-label">Optional</span></label><output class="character-count" data-count-for="Description"></output></div><textarea asp-for="Description" class="form-control" maxlength="1000" rows="5" placeholder="Topics, exercises, reading references, or the result you want to achieve"></textarea><span asp-validation-for="Description" class="field-error"></span></div>
+            <div class="field-caption"><label for="CategoryId" class="form-label">Category</label><a asp-controller="Categories" asp-action="Create" class="field-link"><i class="bi bi-plus-lg" aria-hidden="true"></i>New category</a></div>
+            <select asp-for="CategoryId" class="form-select" required><option value="">Choose a category</option>@foreach (var category in Model.Categories) { <option value="@category.Id">@category.Name</option> }</select><span asp-validation-for="CategoryId" class="field-error"></span>
+            @if (!Model.Categories.Any()) { <p class="empty-field">No categories available.</p> }
+        </fieldset>
+        <fieldset class="editor-section"><legend><i class="bi bi-sliders" aria-hidden="true"></i>Study settings</legend>
+            <div class="editor-grid">
+                <div><label for="Type" class="form-label">Study format</label><select asp-for="Type" class="form-select"><option value="Vocabulary">Vocabulary &amp; recall</option><option value="Algorithm">Algorithms &amp; problem solving</option><option value="Programming">Programming practice</option><option value="Other">Reading &amp; general study</option></select><span asp-validation-for="Type" class="field-error"></span></div>
+                <div><label for="Difficulty" class="form-label">Difficulty</label><select asp-for="Difficulty" class="form-select"><option value="Beginner">Beginner - foundational</option><option value="Intermediate">Intermediate - working knowledge</option><option value="Advanced">Advanced - challenging</option></select><span asp-validation-for="Difficulty" class="field-error"></span></div>
+            </div>
+        </fieldset>
+    </div>
+    <div>
+        <fieldset class="editor-section"><legend><i class="bi bi-clock" aria-hidden="true"></i>Time &amp; priority</legend>
+            <label for="EstimatedDurationMinutes" class="form-label">Estimated study time</label><div class="input-group"><input asp-for="EstimatedDurationMinutes" class="form-control" type="number" min="1" step="1" required /><span class="input-group-text">min</span></div><span asp-validation-for="EstimatedDurationMinutes" class="field-error"></span>
+            <div class="preset-controls" role="group" aria-label="Estimated duration presets">@foreach (var minutes in new[] { 15, 30, 60, 90 }) { <button type="button" data-minutes="@minutes" aria-pressed="false">@minutes min</button> }</div>
+            <label for="Priority" class="form-label mt-4">Priority</label><select asp-for="Priority" class="form-select"><option value="1">1 - Low</option><option value="2">2 - Routine</option><option value="3">3 - Normal</option><option value="4">4 - High</option><option value="5">5 - Critical</option></select><span asp-validation-for="Priority" class="field-error"></span>
+        </fieldset>
+        <fieldset class="editor-section"><legend><i class="bi bi-calendar-event" aria-hidden="true"></i>Review schedule</legend>
+            <label for="NextReviewDate" class="form-label">Next review date <span class="optional-label">Optional</span></label><input asp-for="NextReviewDate" asp-format="{0:yyyy-MM-dd}" class="form-control" type="date" /><span asp-validation-for="NextReviewDate" class="field-error"></span>
+            <div class="preset-controls" role="group" aria-label="Review date presets"><button type="button" data-review-days="1">Tomorrow</button><button type="button" data-review-days="7">In a week</button><button type="button" data-review-days="" aria-label="Clear review date" title="Clear review date"><i class="bi bi-x-lg" aria-hidden="true"></i></button></div>
+        </fieldset>
+    </div>
+</div>

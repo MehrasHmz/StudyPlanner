@@ -28,6 +28,8 @@ public class CreateStudyItemValidator : AbstractValidator<CreateStudyItemCommand
     {
         RuleFor(x => x.Title).NotEmpty().MaximumLength(200);
         RuleFor(x => x.Description).MaximumLength(1000);
+        RuleFor(x => x.Type).IsInEnum();
+        RuleFor(x => x.Difficulty).IsInEnum();
         RuleFor(x => x.EstimatedDurationMinutes).GreaterThan(0);
         RuleFor(x => x.Priority).InclusiveBetween(1, 5);
         RuleFor(x => x.CategoryId).NotEmpty();
@@ -39,7 +41,11 @@ public class UpdateStudyItemValidator : AbstractValidator<UpdateStudyItemCommand
     public UpdateStudyItemValidator()
     {
         RuleFor(x => x.Id).NotEmpty();
+        RuleFor(x => x.UserId).NotEmpty();
         RuleFor(x => x.Title).NotEmpty().MaximumLength(200);
+        RuleFor(x => x.Description).MaximumLength(1000);
+        RuleFor(x => x.Type).IsInEnum();
+        RuleFor(x => x.Difficulty).IsInEnum();
         RuleFor(x => x.EstimatedDurationMinutes).GreaterThan(0);
         RuleFor(x => x.Priority).InclusiveBetween(1, 5);
         RuleFor(x => x.CategoryId).NotEmpty();
@@ -49,6 +55,15 @@ public class CreateCategoryValidator : AbstractValidator<CreateCategoryCommand>
 {
     public CreateCategoryValidator()
     {
+        RuleFor(x => x.Name).NotEmpty().MaximumLength(100);
+        RuleFor(x => x.Description).MaximumLength(500);
+    }
+}
+public class UpdateCategoryValidator : AbstractValidator<UpdateCategoryCommand>
+{
+    public UpdateCategoryValidator()
+    {
+        RuleFor(x => x.Id).NotEmpty();
         RuleFor(x => x.Name).NotEmpty().MaximumLength(100);
         RuleFor(x => x.Description).MaximumLength(500);
     }
@@ -66,5 +81,15 @@ public class CompleteSessionValidator : AbstractValidator<CompleteSessionCommand
     public CompleteSessionValidator()
     {
         RuleFor(x => x.SessionId).NotEmpty();
+        RuleFor(x => x.UserId).NotEmpty();
+        RuleFor(x => x.Results).NotEmpty();
+        RuleFor(x => x.Results)
+            .Must(results => results == null || results.Where(r => r != null).Select(r => r.StudyItemId).Distinct().Count() == results.Count)
+            .WithMessage("Duplicate or invalid session results.");
+        RuleForEach(x => x.Results).NotNull().ChildRules(result =>
+        {
+            result.RuleFor(x => x.StudyItemId).NotEmpty();
+            result.RuleFor(x => x.MinutesSpent).GreaterThan(0);
+        });
     }
 }

@@ -41,6 +41,8 @@ public class StudySessionConfig : IEntityTypeConfiguration<StudySession>
     public void Configure(EntityTypeBuilder<StudySession> b)
     {
         b.HasKey(x => x.Id);
+        // Completion must still match the state originally loaded by this request.
+        b.Property(x => x.Status).IsConcurrencyToken();
         b.HasOne(x => x.User).WithMany(u => u.Sessions).HasForeignKey(x => x.UserId).OnDelete(DeleteBehavior.Cascade);
     }
 }
