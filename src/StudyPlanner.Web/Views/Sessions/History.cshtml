@@ -1,0 +1,22 @@
+@model StudyPlanner.Application.DTOs.PaginatedResult<StudyPlanner.Domain.ReadModels.SessionHistoryEntry>
+@{ ViewData["Title"] = "Study history"; }
+<div class="container">
+    <header class="page-heading"><div><div class="eyebrow">Recorded activity</div><h1>Study history</h1><p>@Model.Total sessions</p></div><a class="btn btn-primary" asp-action="Index"><i class="bi bi-calendar-plus" aria-hidden="true"></i>Plan session</a></header>
+    @if (Model.Items.Any())
+    {
+        <div class="table-responsive" role="region" aria-label="Session history" tabindex="0"><table class="table table-hover history-table"><thead><tr><th>Session date (UTC)</th><th>Status</th><th>Planned</th><th>Recorded</th><th>Completed items</th><th>Details</th></tr></thead><tbody>
+        @foreach (var session in Model.Items)
+        {
+            <tr><td><time datetime="@session.PlannedDate.ToString("O")">@session.PlannedDate.ToString("MMM dd, yyyy HH:mm", System.Globalization.CultureInfo.InvariantCulture)</time></td><td><span class="badge bg-@(session.Status == StudyPlanner.Domain.Enums.SessionStatus.Completed ? "success" : "secondary")">@session.Status</span></td><td>@session.PlannedMinutes min</td><td>@(session.RecordedMinutes.HasValue ? session.RecordedMinutes + " min" : "Not recorded")</td><td>@session.CompletedItems / @session.PlannedItems</td><td><a class="icon-button" asp-action="Details" asp-route-id="@session.Id" aria-label="Session details for @session.PlannedDate.ToString("yyyy-MM-dd")" title="Session details"><i class="bi bi-arrow-right" aria-hidden="true"></i></a></td></tr>
+        }
+        </tbody></table></div>
+    }
+    else { <div class="empty-state"><i class="bi bi-clock-history d-block" aria-hidden="true"></i><h2>No sessions on this page.</h2><a asp-action="Index" class="btn btn-primary">Plan session</a></div> }
+    @if (Model.TotalPages > 1)
+    {
+        <nav class="history-pagination" aria-label="History pages"><span>Page @Model.Page of @Model.TotalPages</span><div class="page-actions">
+            @if (Model.HasPrevious) { <a class="btn btn-outline-secondary" asp-action="History" asp-route-page="@(Model.Page - 1)" aria-label="Previous history page"><i class="bi bi-chevron-left" aria-hidden="true"></i>Previous</a> }
+            @if (Model.HasNext) { <a class="btn btn-outline-secondary" asp-action="History" asp-route-page="@(Model.Page + 1)" aria-label="Next history page">Next<i class="bi bi-chevron-right" aria-hidden="true"></i></a> }
+        </div></nav>
+    }
+</div>

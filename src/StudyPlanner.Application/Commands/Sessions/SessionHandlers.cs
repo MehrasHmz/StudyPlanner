@@ -52,7 +52,9 @@ public class CompleteSessionHandler : IRequestHandler<CompleteSessionCommand>
         if (session.Status != SessionStatus.Planned)
             throw new InvalidSessionCompletionException("Only planned sessions can be completed.");
         if (r.Results == null || r.Results.Count == 0 ||
-            r.Results.Any(result => result == null || result.StudyItemId == Guid.Empty || result.MinutesSpent <= 0) ||
+            r.Results.Any(result => result == null || result.StudyItemId == Guid.Empty ||
+                result.MinutesSpent is < 1 or > StudyProgressPolicy.MaximumMinutes ||
+                !StudyProgressPolicy.IsValidScore(result.Score) || result.Notes?.Length > StudyProgressPolicy.MaximumNotesLength) ||
             r.Results.Select(result => result.StudyItemId).Distinct().Count() != r.Results.Count)
             throw new InvalidSessionCompletionException("Invalid session results.");
 

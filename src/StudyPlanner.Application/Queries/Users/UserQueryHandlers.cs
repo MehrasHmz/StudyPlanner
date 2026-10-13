@@ -15,13 +15,13 @@ public class GetDashboardHandler : IRequestHandler<GetDashboardQuery, DashboardD
     public async Task<DashboardDto> Handle(GetDashboardQuery r, CancellationToken ct)
     {
         var items = (await _items.GetByUserIdAsync(r.UserId, ct)).Where(i => i.UserId == r.UserId && !i.IsDeleted).ToList();
-        var sessions = await _sessions.GetByUserIdAsync(r.UserId, ct);
+        var sessionCount = await _sessions.GetCountByUserIdAsync(r.UserId, ct);
         var totalMinutes = await _progress.GetTotalMinutesAsync(r.UserId, ct);
         var now = _clock.GetUtcNow().UtcDateTime;
         var dueItems = items.Where(i => i.IsDueForReview(now)).ToList();
         var recent = items.OrderByDescending(i => i.CreatedAt).Take(5).Select(i =>
             new StudyItemDto(i.Id, i.Title, i.Description, i.Type, i.Difficulty, i.EstimatedDurationMinutes, i.Priority,
                 i.NextReviewDate, i.IsCompleted, i.CategoryId, i.Category?.Name ?? "", i.UserId, i.CreatedAt)).ToList();
-        return new DashboardDto(items.Count, items.Count(i => i.IsCompleted), dueItems.Count, sessions.Count, totalMinutes, recent) { AsOfUtc = now };
+        return new DashboardDto(items.Count, items.Count(i => i.IsCompleted), dueItems.Count, sessionCount, totalMinutes, recent) { AsOfUtc = now };
     }
 }

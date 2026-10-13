@@ -3,6 +3,7 @@ using StudyPlanner.Application.Commands.Users;
 using StudyPlanner.Application.Commands.StudyItems;
 using StudyPlanner.Application.Commands.Categories;
 using StudyPlanner.Application.Commands.Sessions;
+using StudyPlanner.Domain.Services;
 
 namespace StudyPlanner.Application.Validators;
 public class RegisterValidator : AbstractValidator<RegisterCommand>
@@ -89,7 +90,11 @@ public class CompleteSessionValidator : AbstractValidator<CompleteSessionCommand
         RuleForEach(x => x.Results).NotNull().ChildRules(result =>
         {
             result.RuleFor(x => x.StudyItemId).NotEmpty();
-            result.RuleFor(x => x.MinutesSpent).GreaterThan(0);
+            result.RuleFor(x => x.MinutesSpent).InclusiveBetween(1, StudyProgressPolicy.MaximumMinutes)
+                .WithMessage("Enter actual minutes between 1 and 480.");
+            result.RuleFor(x => x.Score).Must(StudyProgressPolicy.IsValidScore)
+                .WithMessage("Score must be between 0 and 1.");
+            result.RuleFor(x => x.Notes).MaximumLength(StudyProgressPolicy.MaximumNotesLength);
         });
     }
 }

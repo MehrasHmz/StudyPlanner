@@ -4,6 +4,7 @@ using StudyPlanner.Domain.Common;
 using StudyPlanner.Domain.Entities;
 using StudyPlanner.Domain.Interfaces;
 using StudyPlanner.Domain.Services;
+using StudyPlanner.Domain.ReadModels;
 using StudyPlanner.Infrastructure.Data;
 
 namespace StudyPlanner.Infrastructure.Repositories;
@@ -64,6 +65,25 @@ public class StudyItemRepository : Repository<StudyItem>, IStudyItemRepository
 public class StudySessionRepository : Repository<StudySession>, IStudySessionRepository
 {
     public StudySessionRepository(AppDbContext ctx) : base(ctx) { }
+    public async Task<int> GetCountByUserIdAsync(Guid userId, CancellationToken ct = default) =>
+        await _ctx.StudySessions.CountAsync(s => s.UserId == userId, ct);
+
+    public async Task<StudySession?> GetOwnedWithItemsAsync(Guid id, Guid userId, CancellationToken ct = default) =>
+        await _ctx.StudySessions.IgnoreQueryFilters().AsNoTracking().Include(s => s.SessionItems).ThenInclude(i => i.StudyItem)
+            .FirstOrDefaultAsync(s => s.Id == id && s.UserId == userId, ct);
+
+    public async Task<(IReadOnlyList<SessionHistoryEntry> Items, int Total)> GetHistoryPageAsync(Guid userId, int page, int size, CancellationToken ct = default)
+    {
+        var sessions = _ctx.StudySessions.AsNoTracking().Where(s => s.UserId == userId);
+        var total = await sessions.CountAsync(ct);
+        var progress = _ctx.ProgressRecords.IgnoreQueryFilters().Where(p => p.UserId == userId && p.StudyItem.UserId == userId);
+        var rows = await sessions.OrderByDescending(s => s.PlannedDate).ThenByDescending(s => s.Id)
+            .Skip((page - 1) * size).Take(size).Select(s => new SessionHistoryEntry(s.Id, s.UserId, s.PlannedDate, s.Status,
+                s.AvailableMinutes, s.TotalPlannedMinutes, s.TotalPlannedItems,
+                progress.Any(p => p.SessionId == s.Id) ? progress.Where(p => p.SessionId == s.Id).Sum(p => (int?)p.MinutesSpent) : null,
+                progress.Where(p => p.SessionId == s.Id).Select(p => p.StudyItemId).Distinct().Count())).ToListAsync(ct);
+        return (rows, total);
+    }
     public override async Task<int> SaveChangesAsync(CancellationToken ct = default)
     {
         try
@@ -91,6 +111,10 @@ public class StudySessionRepository : Repository<StudySession>, IStudySessionRep
 public class ProgressRecordRepository : Repository<ProgressRecord>, IProgressRecordRepository
 {
     public ProgressRecordRepository(AppDbContext ctx) : base(ctx) { }
+    public async Task<IReadOnlyList<ProgressRecord>> GetBySessionAsync(Guid userId, Guid sessionId, CancellationToken ct = default) =>
+        await _ctx.ProgressRecords.IgnoreQueryFilters().AsNoTracking().Include(p => p.StudyItem)
+            .Where(p => p.UserId == userId && p.SessionId == sessionId && p.StudyItem.UserId == userId)
+            .OrderBy(p => p.CompletedAt).ThenBy(p => p.Id).ToListAsync(ct);
     public async Task<IReadOnlyList<ProgressRecord>> GetByUserIdAsync(Guid userId, CancellationToken ct = default) =>
         await _ctx.ProgressRecords.AsNoTracking().Include(p => p.StudyItem).Where(p => p.UserId == userId).OrderByDescending(p => p.CompletedAt).ToListAsync(ct);
     public async Task<int> GetTotalMinutesAsync(Guid userId, CancellationToken ct = default) =>

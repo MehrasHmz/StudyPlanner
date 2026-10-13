@@ -69,6 +69,14 @@ Successful session completion appends progress, keeps completed items completed,
 
 The application uses .NET's `TimeProvider` for planning, dashboard and completion timestamps. Tests supply a fixed clock. Focus Mode remains browser-local and never writes progress automatically.
 
+## Recorded Activity and Session History
+
+Session completion displays planned minutes separately and starts actual minutes blank. Select the items you studied and explicitly enter 1-480 actual minutes for each selected item. Optional scores use the existing 0-1 scale; optional notes are limited to 1,000 characters. Unselected items are omitted from completion and remain unchanged. Invalid input retains the submitted fields and creates no progress.
+
+`/Sessions/History` is authenticated and paginated in SQL. `/Sessions/Details/{id}` shows only the current user's session and recorded activities, including soft-deleted study items. Planned sessions can be resumed at `/Sessions/Record/{id}` without any GET writes. Recorded totals sum stored ProgressRecords once, while completed-item totals count distinct item IDs. Dashboard study time also uses stored progress, never planned estimates.
+
+Historical minutes are labeled **Recorded**, not independently verified actual effort: older forms prefilled planned estimates and the schema has no provenance flag to distinguish those records. They are preserved rather than reclassified. Titles are current study-item titles, not immutable historical snapshots. Focus remains independent and does not create ProgressRecords.
+
 ## Tests
 
 ```sh

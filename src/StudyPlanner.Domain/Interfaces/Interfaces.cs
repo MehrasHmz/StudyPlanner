@@ -1,5 +1,6 @@
 using StudyPlanner.Domain.Common;
 using StudyPlanner.Domain.Entities;
+using StudyPlanner.Domain.ReadModels;
 
 namespace StudyPlanner.Domain.Interfaces;
 public interface IRepository<T> where T : Entity
@@ -33,11 +34,15 @@ public interface IStudySessionRepository : IRepository<StudySession>
 {
     Task<IReadOnlyList<StudySession>> GetByUserIdAsync(Guid userId, CancellationToken ct = default);
     Task<StudySession?> GetWithItemsAsync(Guid id, CancellationToken ct = default);
+    Task<StudySession?> GetOwnedWithItemsAsync(Guid id, Guid userId, CancellationToken ct = default);
+    Task<int> GetCountByUserIdAsync(Guid userId, CancellationToken ct = default);
+    Task<(IReadOnlyList<SessionHistoryEntry> Items, int Total)> GetHistoryPageAsync(Guid userId, int page, int size, CancellationToken ct = default);
 }
 public interface IProgressRecordRepository : IRepository<ProgressRecord>
 {
     Task<IReadOnlyList<ProgressRecord>> GetByUserIdAsync(Guid userId, CancellationToken ct = default);
     Task<int> GetTotalMinutesAsync(Guid userId, CancellationToken ct = default);
+    Task<IReadOnlyList<ProgressRecord>> GetBySessionAsync(Guid userId, Guid sessionId, CancellationToken ct = default);
 }
 public interface IStudySessionPlanner
 {

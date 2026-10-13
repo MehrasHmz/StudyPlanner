@@ -148,7 +148,12 @@ textarea.form-control { min-height: 96px; resize: vertical; } .form-check-input:
 .landing-band { padding: 44px 0; border-bottom: 1px solid var(--border-subtle); } .landing-points { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 36px; } .landing-points h2 { font-size: 20px; margin: 12px 0; } .landing-points i { font-size: 26px; color: var(--primary); } .landing-points p { color: var(--text-muted); margin: 0; }
 .planner-form { max-width: 640px; margin: 0 auto; }
 .session-overview { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 20px; padding: 22px 0; margin-bottom: 24px; border-block: 1px solid var(--border-subtle); } .session-overview strong { display: block; font-size: 22px; margin-top: 6px; }
-.session-result { padding: 24px 0; border-top: 1px solid var(--border-subtle); } .session-result h3 { font-size: 18px; } .session-result-fields { display: grid; grid-template-columns: 150px 150px minmax(0, 1fr); gap: 16px; }
+.session-result { padding: 24px 0; border-top: 1px solid var(--border-subtle); } .session-result h2, .session-result h3 { font-size: 18px; } .session-result-fields { display: grid; grid-template-columns: 160px 180px minmax(0, 1fr); gap: 16px; }
+.session-result-fields:disabled { opacity: .55; }
+.history-table th { white-space: nowrap; }
+.history-title { overflow-wrap: anywhere; }
+.history-notes { white-space: pre-wrap; overflow-wrap: anywhere; margin-top: 16px; }
+.history-pagination { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 16px; margin-top: 24px; }
 .site-footer { border-top: 1px solid var(--border-subtle); padding: 24px 0; font-size: 12px; color: var(--text-muted); }
 dialog { color: var(--text-primary); background: var(--bg-card); border: 1px solid var(--border-subtle); border-radius: 8px; width: min(480px, calc(100% - 32px)); max-height: calc(100svh - 40px); padding: 28px; overflow: auto; } dialog::backdrop { background: #000a; } dialog h2 { font-size: 22px; margin-bottom: 16px; }
 @media (max-width: 1024px) { .navbar-brand { margin-right: 16px; } .dashboard-grid { gap: 28px; } }

@@ -11,6 +11,7 @@ using Moq;
 using StudyPlanner.Domain.Entities;
 using StudyPlanner.Domain.Enums;
 using StudyPlanner.Domain.Interfaces;
+using StudyPlanner.Domain.ReadModels;
 
 namespace StudyPlanner.UnitTests;
 
@@ -133,6 +134,22 @@ public sealed class SecurityTestStore
 
         SessionRepository.Setup(r => r.GetWithItemsAsync(It.IsAny<Guid>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync((Guid id, CancellationToken _) => Sessions.GetValueOrDefault(id));
+        SessionRepository.Setup(r => r.GetOwnedWithItemsAsync(It.IsAny<Guid>(), It.IsAny<Guid>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync((Guid id, Guid userId, CancellationToken _) => Sessions.TryGetValue(id, out var session) && session.UserId == userId ? session : null);
+        SessionRepository.Setup(r => r.GetCountByUserIdAsync(It.IsAny<Guid>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync((Guid userId, CancellationToken _) => Sessions.Values.Count(s => s.UserId == userId));
+        SessionRepository.Setup(r => r.GetHistoryPageAsync(It.IsAny<Guid>(), It.IsAny<int>(), It.IsAny<int>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync((Guid userId, int page, int size, CancellationToken _) =>
+            {
+                var sessions = Sessions.Values.Where(s => s.UserId == userId).OrderByDescending(s => s.PlannedDate).ThenByDescending(s => s.Id).ToList();
+                var rows = sessions.Skip((page - 1) * size).Take(size).Select(s =>
+                {
+                    var records = Progress.Where(p => p.UserId == userId && p.SessionId == s.Id).ToList();
+                    return new SessionHistoryEntry(s.Id, userId, s.PlannedDate, s.Status, s.AvailableMinutes, s.TotalPlannedMinutes, s.TotalPlannedItems,
+                        records.Any() ? records.Sum(p => p.MinutesSpent) : null, records.Select(p => p.StudyItemId).Distinct().Count());
+                }).ToList();
+                return ((IReadOnlyList<SessionHistoryEntry>)rows, sessions.Count);
+            });
         SessionRepository.Setup(r => r.GetByUserIdAsync(It.IsAny<Guid>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync((Guid id, CancellationToken _) => (IReadOnlyList<StudySession>)Sessions.Values.Where(s => s.UserId == id).ToList());
         SessionRepository.Setup(r => r.AddAsync(It.IsAny<StudySession>(), It.IsAny<CancellationToken>()))
@@ -143,7 +160,10 @@ public sealed class SecurityTestStore
         ProgressRepository.Setup(r => r.AddAsync(It.IsAny<ProgressRecord>(), It.IsAny<CancellationToken>()))
             .Callback<ProgressRecord, CancellationToken>((progress, _) => { Progress.Add(progress); Writes++; })
             .ReturnsAsync((ProgressRecord progress, CancellationToken _) => progress);
-        ProgressRepository.Setup(r => r.GetTotalMinutesAsync(It.IsAny<Guid>(), It.IsAny<CancellationToken>())).ReturnsAsync(0);
+        ProgressRepository.Setup(r => r.GetTotalMinutesAsync(It.IsAny<Guid>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync((Guid userId, CancellationToken _) => Progress.Where(p => p.UserId == userId).Sum(p => p.MinutesSpent));
+        ProgressRepository.Setup(r => r.GetBySessionAsync(It.IsAny<Guid>(), It.IsAny<Guid>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync((Guid userId, Guid sessionId, CancellationToken _) => (IReadOnlyList<ProgressRecord>)Progress.Where(p => p.UserId == userId && p.SessionId == sessionId).ToList());
     }
 
     private StudyItem Item(Guid userId) => new("Test item", "Description", StudyItemType.Programming,
@@ -152,7 +172,9 @@ public sealed class SecurityTestStore
     private static StudySession Session(Guid userId, StudyItem item)
     {
         var session = new StudySession(userId, DateTime.UtcNow, 60);
-        session.AddItem(new StudySessionItem(session.Id, item.Id, 20, 1));
+        var row = new StudySessionItem(session.Id, item.Id, 20, 1);
+        typeof(StudySessionItem).GetProperty(nameof(StudySessionItem.StudyItem))!.SetValue(row, item);
+        session.AddItem(row);
         return session;
     }
 }

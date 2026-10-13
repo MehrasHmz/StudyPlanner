@@ -1,0 +1,20 @@
+@model StudyPlanner.Application.Queries.Sessions.SessionDetailsDto
+@{ ViewData["Title"] = "Session details"; var session = Model.Session; }
+<div class="container">
+    <header class="page-heading"><div><div class="eyebrow">Study history</div><h1>Session details</h1><p>@session.PlannedDate.ToString("MMM dd, yyyy HH:mm", System.Globalization.CultureInfo.InvariantCulture) UTC</p></div><div class="page-actions"><a class="btn btn-outline-secondary" asp-action="History"><i class="bi bi-arrow-left" aria-hidden="true"></i>History</a>@if (session.Status == StudyPlanner.Domain.Enums.SessionStatus.Planned) { <a class="btn btn-primary" asp-action="Record" asp-route-id="@session.Id"><i class="bi bi-pencil" aria-hidden="true"></i>Record activity</a> }</div></header>
+    <section class="session-overview" aria-label="Session totals"><div><span class="text-muted">Planned time</span><strong>@session.TotalPlannedMinutes min</strong></div><div><span class="text-muted">Recorded time</span><strong>@(Model.RecordedMinutes.HasValue ? Model.RecordedMinutes + " min" : "Not recorded")</strong></div><div><span class="text-muted">Completed items</span><strong>@Model.CompletedItems / @session.TotalPlannedItems</strong></div><div><span class="text-muted">Status</span><strong>@session.Status</strong></div></section>
+    <section><div class="section-title"><h2>Planned items</h2></div><div class="table-responsive" role="region" aria-label="Planned and recorded time" tabindex="0"><table class="table"><thead><tr><th>Study item</th><th>Planned</th><th>Recorded</th></tr></thead><tbody>
+    @foreach (var item in session.Items)
+    {
+        var records = Model.Activities.Where(p => p.StudyItemId == item.StudyItemId).ToList();
+        <tr><td class="history-title">@item.StudyItemTitle</td><td>@item.PlannedMinutes min</td><td>@(records.Any() ? records.Sum(p => p.MinutesSpent) + " min" : "Not recorded")</td></tr>
+    }
+    </tbody></table></div></section>
+    <section class="mt-4"><div class="section-title"><h2>Recorded activities</h2></div>
+    @if (!Model.Activities.Any()) { <div class="empty-state"><h3>No study activity recorded.</h3></div> }
+    @foreach (var activity in Model.Activities)
+    {
+        <article class="session-result"><div class="section-title"><h3 class="history-title">@activity.Title</h3><span>@activity.MinutesSpent min recorded</span></div><div class="item-meta"><time datetime="@activity.CompletedAt.ToString("O")">@activity.CompletedAt.ToString("MMM dd, yyyy HH:mm", System.Globalization.CultureInfo.InvariantCulture) UTC</time><span>Score: @(activity.Score?.ToString("0.##", System.Globalization.CultureInfo.InvariantCulture) ?? "Not recorded")</span></div>@if (!string.IsNullOrWhiteSpace(activity.Notes)) { <p class="history-notes">@activity.Notes</p> }</article>
+    }
+    </section>
+</div>

@@ -1,22 +1,32 @@
-@model StudyPlanner.Application.DTOs.StudySessionDto
-@{ ViewData["Title"] = "Planned session"; var ordered = Model.Items.OrderBy(item => item.Order).ToList(); }
+@model StudyPlanner.Web.Models.SessionCompletionViewModel
+@{ ViewData["Title"] = "Record study activity"; var session = Model.Session; var ordered = session.Items.OrderBy(item => item.Order).ToList(); }
 <div class="container">
-    <header class="page-heading"><div><div class="eyebrow">Your study plan</div><h1>One session, clear priorities.</h1></div><a class="btn btn-outline-secondary" asp-action="Index"><i class="bi bi-arrow-left" aria-hidden="true"></i>Back</a></header>
-    <section class="session-overview" aria-label="Session overview"><div><span class="text-muted">Available</span><strong>@Model.AvailableMinutes min</strong></div><div><span class="text-muted">Planned</span><strong>@Model.TotalPlannedMinutes min</strong></div><div><span class="text-muted">Items</span><strong>@Model.TotalPlannedItems</strong></div><div><span class="text-muted">Status</span><strong>@Model.Status</strong></div></section>
+    <header class="page-heading"><div><div class="eyebrow">Your study session</div><h1>Record study activity</h1></div><div class="page-actions"><a class="btn btn-outline-secondary" asp-action="History"><i class="bi bi-clock-history" aria-hidden="true"></i>History</a><a class="btn btn-outline-secondary" asp-action="Index"><i class="bi bi-arrow-left" aria-hidden="true"></i>Back</a></div></header>
+    <section class="session-overview" aria-label="Planned session"><div><span class="text-muted">Available</span><strong>@session.AvailableMinutes min</strong></div><div><span class="text-muted">Planned</span><strong>@session.TotalPlannedMinutes min</strong></div><div><span class="text-muted">Items</span><strong>@session.TotalPlannedItems</strong></div><div><span class="text-muted">Status</span><strong>@session.Status</strong></div></section>
     @if (ordered.Any())
     {
-        <form asp-action="CompleteSession" method="post" data-confirm="Complete this session with the recorded results?">
-            <input type="hidden" name="SessionId" value="@Model.Id" />
+        <form asp-action="CompleteSession" method="post" data-session-results data-confirm="Complete this session with the recorded results?">
+            <input asp-for="SessionId" type="hidden" />
+            <div asp-validation-summary="ModelOnly" class="text-danger" role="alert"></div>
             @for (var index = 0; index < ordered.Count; index++)
             {
                 var item = ordered[index];
-                <section class="session-result"><div class="section-title"><h3>@item.Order. @item.StudyItemTitle</h3><a class="icon-button" asp-controller="Focus" asp-action="Index" asp-route-itemId="@item.StudyItemId" title="Focus on @item.StudyItemTitle" aria-label="Focus on @item.StudyItemTitle"><i class="bi bi-bullseye" aria-hidden="true"></i></a></div>
-                    <input type="hidden" name="Results[@index].StudyItemId" value="@item.StudyItemId" />
-                    <div class="session-result-fields"><div><label class="form-label" for="minutes-@index">Minutes studied</label><input id="minutes-@index" type="number" name="Results[@index].MinutesSpent" value="@item.PlannedMinutes" min="1" required class="form-control" /></div><div><label class="form-label" for="score-@index">Score (optional)</label><input id="score-@index" type="number" name="Results[@index].Score" min="0" max="1" step="0.01" class="form-control" /></div><div><label class="form-label" for="notes-@index">Notes (optional)</label><input id="notes-@index" name="Results[@index].Notes" class="form-control" maxlength="1000" /></div></div>
+                <section class="session-result">
+                    <div class="section-title"><div><h2>@item.Order. @item.StudyItemTitle</h2><span class="text-muted">Planned: @item.PlannedMinutes min</span></div><a class="icon-button" asp-controller="Focus" asp-action="Index" asp-route-itemId="@item.StudyItemId" title="Focus on @item.StudyItemTitle" aria-label="Focus on @item.StudyItemTitle"><i class="bi bi-bullseye" aria-hidden="true"></i></a></div>
+                    <div class="form-check mb-3"><input id="include-@index" type="checkbox" class="form-check-input" data-session-include checked="@Model.Results[index].Include" /><label for="include-@index" class="form-check-label">Record this item</label></div>
+                    <fieldset class="session-result-fields" disabled="@(!Model.Results[index].Include)">
+                        <legend class="visually-hidden">Results for @item.StudyItemTitle</legend>
+                        <input type="hidden" name="Results.Index" value="@index" />
+                        <input asp-for="Results[index].StudyItemId" type="hidden" />
+                        <div><label asp-for="Results[index].MinutesSpent" for="minutes-@index" class="form-label">Actual minutes studied</label><input asp-for="Results[index].MinutesSpent" id="minutes-@index" type="number" min="1" max="480" required class="form-control" aria-describedby="minutes-error-@index" /><span asp-validation-for="Results[index].MinutesSpent" id="minutes-error-@index" class="text-danger d-block" role="alert"></span></div>
+                        <div><label asp-for="Results[index].Score" for="score-@index" class="form-label">Score (0-1, optional)</label><input asp-for="Results[index].Score" id="score-@index" type="number" min="0" max="1" step="0.01" class="form-control" aria-describedby="score-error-@index" /><span asp-validation-for="Results[index].Score" id="score-error-@index" class="text-danger d-block" role="alert"></span></div>
+                        <div><label asp-for="Results[index].Notes" for="notes-@index" class="form-label">Study notes (optional)</label><textarea asp-for="Results[index].Notes" id="notes-@index" class="form-control" maxlength="1000" rows="3" aria-describedby="notes-error-@index"></textarea><span asp-validation-for="Results[index].Notes" id="notes-error-@index" class="text-danger d-block" role="alert"></span></div>
+                    </fieldset>
                 </section>
             }
             <button class="btn btn-primary mt-4" type="submit"><i class="bi bi-check-circle" aria-hidden="true"></i>Complete session</button>
         </form>
     }
-    else { <div class="empty-state"><i class="bi bi-calendar d-block" aria-hidden="true"></i><h3>No items fit this session.</h3><div class="page-actions justify-content-center"><a class="btn btn-primary" asp-controller="StudyItems" asp-action="Create">Add study item</a><a class="btn btn-outline-secondary" asp-action="Index">Change duration</a></div></div> }
+    else { <div class="empty-state"><i class="bi bi-calendar d-block" aria-hidden="true"></i><h2>No items fit this session.</h2><div class="page-actions justify-content-center"><a class="btn btn-primary" asp-controller="StudyItems" asp-action="Create">Add study item</a><a class="btn btn-outline-secondary" asp-action="Index">Change duration</a></div></div> }
 </div>
+@section Scripts { <script src="~/js/session-results.js" asp-append-version="true"></script> }
