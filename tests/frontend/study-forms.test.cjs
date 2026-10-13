@@ -3,7 +3,9 @@ const assert = require('node:assert/strict');
 const fs = require('node:fs');
 
 // This workflow creates synthetic records in the isolated local preview database.
-const base = 'http://127.0.0.1:5815', output = '/private/tmp/studyplanner-forms-20261011';
+const base = process.env.STUDYPLANNER_FORMS_TEST_URL || 'http://127.0.0.1:5815';
+if (new URL(base).hostname !== '127.0.0.1') throw new Error('Use a loopback synthetic preview.');
+const output = process.env.STUDYPLANNER_FORMS_TEST_OUTPUT || '/private/tmp/studyplanner-forms-20261011';
 fs.mkdirSync(output, { recursive: true });
 let browser;
 (async () => {

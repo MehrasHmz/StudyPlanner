@@ -22,6 +22,8 @@ public class Repository<T> : IRepository<T> where T : Entity
 public class UserRepository : Repository<User>, IUserRepository
 {
     public UserRepository(AppDbContext ctx) : base(ctx) { }
+    public override async Task<User?> GetByIdAsync(Guid id, CancellationToken ct = default) =>
+        await _ctx.Users.AsNoTracking().FirstOrDefaultAsync(u => u.Id == id, ct);
     public async Task<User?> GetByEmailAsync(string email, CancellationToken ct = default) =>
         await _ctx.Users.AsNoTracking().FirstOrDefaultAsync(u => u.Email == email.ToLower(), ct);
     public async Task<bool> ExistsByEmailAsync(string email, CancellationToken ct = default) =>
@@ -30,8 +32,10 @@ public class UserRepository : Repository<User>, IUserRepository
 public class CategoryRepository : Repository<Category>, ICategoryRepository
 {
     public CategoryRepository(AppDbContext ctx) : base(ctx) { }
+    public async Task<bool> HasStudyItemsAsync(Guid id, CancellationToken ct = default) =>
+        await _ctx.StudyItems.IgnoreQueryFilters().AnyAsync(i => i.CategoryId == id, ct);
     public async Task<Category?> GetByNameAsync(string name, CancellationToken ct = default) =>
-        await _ctx.Categories.FirstOrDefaultAsync(c => c.Name == name, ct);
+        await _ctx.Categories.IgnoreQueryFilters().FirstOrDefaultAsync(c => c.Name == name, ct);
     public async Task<IReadOnlyList<Category>> GetPagedAsync(int page, int size, CancellationToken ct = default) =>
         await _ctx.Categories.AsNoTracking().OrderBy(c => c.Name).Skip((page - 1) * size).Take(size).ToListAsync(ct);
     public async Task<int> GetCountAsync(CancellationToken ct = default) => await _ctx.Categories.CountAsync(ct);
@@ -40,15 +44,15 @@ public class StudyItemRepository : Repository<StudyItem>, IStudyItemRepository
 {
     public StudyItemRepository(AppDbContext ctx) : base(ctx) { }
     public async Task<IReadOnlyList<StudyItem>> GetByUserIdAsync(Guid userId, CancellationToken ct = default) =>
-        await _ctx.StudyItems.AsNoTracking().Include(s => s.Category).Where(s => s.UserId == userId).ToListAsync(ct);
+        await _ctx.StudyItems.IgnoreQueryFilters().AsNoTracking().Include(s => s.Category).Where(s => s.UserId == userId && !s.IsDeleted).ToListAsync(ct);
     public async Task<IReadOnlyList<StudyItem>> GetDueForReviewAsync(Guid userId, DateTime now, CancellationToken ct = default) =>
-        await _ctx.StudyItems.AsNoTracking().Include(s => s.Category)
+        await _ctx.StudyItems.IgnoreQueryFilters().AsNoTracking().Include(s => s.Category)
             .Where(s => s.UserId == userId).Where(StudyReviewPolicy.DueAt(now)).ToListAsync(ct);
     public async Task<StudyItem?> GetWithDetailsAsync(Guid id, CancellationToken ct = default) =>
-        await _ctx.StudyItems.Include(s => s.Category).Include(s => s.User).FirstOrDefaultAsync(s => s.Id == id, ct);
+        await _ctx.StudyItems.IgnoreQueryFilters().Include(s => s.Category).Include(s => s.User).FirstOrDefaultAsync(s => s.Id == id && !s.IsDeleted, ct);
     public async Task<(IReadOnlyList<StudyItem> Items, int Total)> GetPagedAsync(Guid userId, int page, int size, string? search, string? sortBy, bool desc, CancellationToken ct = default)
     {
-        var q = _ctx.StudyItems.AsNoTracking().Include(s => s.Category).Where(s => s.UserId == userId).AsQueryable();
+        var q = _ctx.StudyItems.IgnoreQueryFilters().AsNoTracking().Include(s => s.Category).Where(s => s.UserId == userId && !s.IsDeleted).AsQueryable();
         if (!string.IsNullOrWhiteSpace(search)) { var s = search.ToLower(); q = q.Where(x => x.Title.ToLower().Contains(s) || x.Description.ToLower().Contains(s)); }
         var total = await q.CountAsync(ct);
         q = sortBy?.ToLower() switch

@@ -7,6 +7,9 @@ x-app: &app
     ASPNETCORE_ENVIRONMENT: ${ASPNETCORE_ENVIRONMENT:-Production}
     ASPNETCORE_HTTP_PORTS: "8080"
     DataProtection__KeysPath: /app/keys
+    Security__RequireSecureCookies: ${REQUIRE_SECURE_COOKIES:-false}
+    Security__LoginAttemptsPerMinute: ${LOGIN_ATTEMPTS_PER_MINUTE:-10}
+    Security__RegistrationAttemptsPerMinute: ${REGISTRATION_ATTEMPTS_PER_MINUTE:-5}
     ConnectionStrings__DefaultConnection: Host=postgres;Port=5432;Database=${POSTGRES_DB:-StudyPlanner};Username=${POSTGRES_USER:?Set POSTGRES_USER in .env};Password=${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}
   volumes:
     - data_protection:/app/keys

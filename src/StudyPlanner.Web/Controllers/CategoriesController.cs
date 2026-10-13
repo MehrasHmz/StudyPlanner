@@ -51,7 +51,8 @@ public class CategoriesController : BaseController
         }
         catch (Exception ex)
         {
-            ViewBag.Errors = new List<string> { ex.Message };
+            HttpContext.RequestServices?.GetService<ILogger<CategoriesController>>()?.LogError(ex, "Category creation failed.");
+            ViewBag.Errors = new List<string> { "Unable to save the category. Please try again." };
             return View(cmd);
         }
     }
@@ -76,7 +77,8 @@ public class CategoriesController : BaseController
         }
         catch (Exception ex)
         {
-            ViewBag.Errors = new List<string> { ex.Message };
+            HttpContext.RequestServices?.GetService<ILogger<CategoriesController>>()?.LogError(ex, "Category update failed.");
+            ViewBag.Errors = new List<string> { "Unable to save the category. Please try again." };
             return View(existing);
         }
     }
@@ -84,7 +86,13 @@ public class CategoriesController : BaseController
     [HttpPost]
     public async Task<IActionResult> Delete(Guid id)
     {
-        await _mediator.Send(new DeleteCategoryCommand(id));
+        try { await _mediator.Send(new DeleteCategoryCommand(id)); }
+        catch (KeyNotFoundException) { return NotFound(); }
+        catch (InvalidOperationException)
+        {
+            TempData["Error"] = "This category is referenced by study items and cannot be deleted.";
+            return RedirectToAction(nameof(Index));
+        }
         TempData["Success"] = "Category deleted.";
         return RedirectToAction(nameof(Index));
     }

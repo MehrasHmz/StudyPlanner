@@ -9,9 +9,10 @@ public class GetAllCategoriesHandler : IRequestHandler<GetAllCategoriesQuery, Pa
     public GetAllCategoriesHandler(ICategoryRepository repo) => _repo = repo;
     public async Task<PaginatedResult<CategoryDto>> Handle(GetAllCategoriesQuery r, CancellationToken ct)
     {
-        var cats = await _repo.GetPagedAsync(r.Page, r.PageSize, ct);
+        var page = Math.Clamp(r.Page, 1, 1_000_000); var size = Math.Clamp(r.PageSize, 1, 100);
+        var cats = await _repo.GetPagedAsync(page, size, ct);
         var total = await _repo.GetCountAsync(ct);
-        return new PaginatedResult<CategoryDto>(cats.Select(c => new CategoryDto(c.Id, c.Name, c.Description)).ToList(), total, r.Page, r.PageSize);
+        return new PaginatedResult<CategoryDto>(cats.Select(c => new CategoryDto(c.Id, c.Name, c.Description)).ToList(), total, page, size);
     }
 }
 public class GetCategoryByIdHandler : IRequestHandler<GetCategoryByIdQuery, CategoryDto?>

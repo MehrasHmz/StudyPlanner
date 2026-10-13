@@ -22,6 +22,7 @@ public class UpdateCategoryHandler : IRequestHandler<UpdateCategoryCommand>
     public async Task Handle(UpdateCategoryCommand r, CancellationToken ct)
     {
         var cat = await _repo.GetByIdAsync(r.Id, ct) ?? throw new KeyNotFoundException("Category not found.");
+        if (cat.IsDeleted) throw new KeyNotFoundException("Category not found.");
         cat.SetName(r.Name);
         cat.SetDescription(r.Description ?? string.Empty);
         _repo.Update(cat);
@@ -35,6 +36,9 @@ public class DeleteCategoryHandler : IRequestHandler<DeleteCategoryCommand>
     public async Task Handle(DeleteCategoryCommand r, CancellationToken ct)
     {
         var cat = await _repo.GetByIdAsync(r.Id, ct) ?? throw new KeyNotFoundException("Category not found.");
+        if (cat.IsDeleted) throw new KeyNotFoundException("Category not found.");
+        if (await _repo.HasStudyItemsAsync(cat.Id, ct))
+            throw new InvalidOperationException("This category is referenced by study items and cannot be deleted.");
         cat.SoftDelete();
         _repo.Update(cat);
         await _repo.SaveChangesAsync(ct);

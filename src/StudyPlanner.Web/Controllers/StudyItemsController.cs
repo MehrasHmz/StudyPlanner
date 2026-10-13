@@ -34,7 +34,7 @@ public class StudyItemsController : BaseController
     {
         var item = await _mediator.Send(new GetStudyItemByIdQuery(id, GetUserId()));
         if (item == null || item.UserId != GetUserId()) return NotFound();
-        ViewBag.Categories = await LoadCategories(item.CategoryId);
+        ViewBag.Categories = await LoadCategories(item.CategoryId, item);
         ViewBag.Errors = new List<string>();
         return View(item);
     }
@@ -63,7 +63,8 @@ public class StudyItemsController : BaseController
         catch (Exception ex)
         {
             ViewBag.Categories = await LoadCategories(cmd.CategoryId);
-            ViewBag.Errors = new List<string> { ex.Message };
+            HttpContext.RequestServices?.GetService<ILogger<StudyItemsController>>()?.LogError(ex, "Study item creation failed.");
+            ViewBag.Errors = new List<string> { "Unable to save the study item. Please try again." };
             return View(cmd);
         }
     }
@@ -76,7 +77,7 @@ public class StudyItemsController : BaseController
         if (existing == null) return NotFound();
         if (!ModelState.IsValid)
         {
-            ViewBag.Categories = await LoadCategories(cmd.CategoryId);
+            ViewBag.Categories = await LoadCategories(cmd.CategoryId, existing);
             return View(existing);
         }
         try
@@ -91,7 +92,7 @@ public class StudyItemsController : BaseController
         }
         catch (ValidationException ex)
         {
-            ViewBag.Categories = await LoadCategories(cmd.CategoryId);
+            ViewBag.Categories = await LoadCategories(cmd.CategoryId, existing);
             ViewBag.Errors = ex.Errors.Select(e => e.ErrorMessage).ToList();
             foreach (var error in ex.Errors) ModelState.AddModelError(error.PropertyName, error.ErrorMessage);
             var item = await _mediator.Send(new GetStudyItemByIdQuery(cmd.Id, cmd.UserId));
@@ -100,8 +101,9 @@ public class StudyItemsController : BaseController
         }
         catch (Exception ex)
         {
-            ViewBag.Categories = await LoadCategories(cmd.CategoryId);
-            ViewBag.Errors = new List<string> { ex.Message };
+            ViewBag.Categories = await LoadCategories(cmd.CategoryId, existing);
+            HttpContext.RequestServices?.GetService<ILogger<StudyItemsController>>()?.LogError(ex, "Study item update failed.");
+            ViewBag.Errors = new List<string> { "Unable to save the study item. Please try again." };
             var item = await _mediator.Send(new GetStudyItemByIdQuery(cmd.Id, cmd.UserId));
             if (item == null) return NotFound();
             return View(item);
@@ -137,7 +139,7 @@ public class StudyItemsController : BaseController
         return RedirectToAction(nameof(Index));
     }
 
-    private async Task<List<CategoryDto>> LoadCategories(Guid? selectedCategoryId = null)
+    private async Task<List<CategoryDto>> LoadCategories(Guid? selectedCategoryId = null, StudyItemDto? existing = null)
     {
         var result = await _mediator.Send(new GetAllCategoriesQuery(1, 100));
         var categories = result.Items.ToList();
@@ -146,6 +148,8 @@ public class StudyItemsController : BaseController
             var selected = await _mediator.Send(new GetCategoryByIdQuery(selectedCategoryId.Value), HttpContext.RequestAborted);
             if (selected != null) categories.Add(selected);
         }
+        if (existing != null && categories.All(category => category.Id != existing.CategoryId))
+            categories.Add(new CategoryDto(existing.CategoryId, "Archived category", ""));
         return categories;
     }
 }

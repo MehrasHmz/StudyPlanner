@@ -22,6 +22,7 @@ public interface ICategoryRepository : IRepository<Category>
     Task<Category?> GetByNameAsync(string name, CancellationToken ct = default);
     Task<IReadOnlyList<Category>> GetPagedAsync(int page, int size, CancellationToken ct = default);
     Task<int> GetCountAsync(CancellationToken ct = default);
+    Task<bool> HasStudyItemsAsync(Guid id, CancellationToken ct = default);
 }
 public interface IStudyItemRepository : IRepository<StudyItem>
 {

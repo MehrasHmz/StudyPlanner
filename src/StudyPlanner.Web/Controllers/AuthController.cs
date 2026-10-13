@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using StudyPlanner.Application.Commands.Users;
+using Microsoft.AspNetCore.RateLimiting;
 
 namespace StudyPlanner.Web.Controllers;
 public class AuthController : Controller
@@ -16,7 +17,7 @@ public class AuthController : Controller
     public IActionResult Login() => View();
     public IActionResult Register() => View();
 
-    [HttpPost] public async Task<IActionResult> Login(LoginCommand cmd)
+    [HttpPost, EnableRateLimiting("auth-login")] public async Task<IActionResult> Login(LoginCommand cmd)
     {
         ViewData["Email"] = cmd.Email;
         if (!ModelState.IsValid)
@@ -46,14 +47,14 @@ public class AuthController : Controller
             TempData["Error"] = "Please enter a valid email and password.";
             return View();
         }
-        catch (UnauthorizedAccessException ex)
+        catch (UnauthorizedAccessException)
         {
-            TempData["Error"] = ex.Message;
+            TempData["Error"] = "Invalid credentials.";
             return View();
         }
     }
 
-    [HttpPost] public async Task<IActionResult> Register(RegisterCommand cmd)
+    [HttpPost, EnableRateLimiting("auth-register")] public async Task<IActionResult> Register(RegisterCommand cmd)
     {
         ViewData["Email"] = cmd.Email;
         ViewData["FullName"] = cmd.FullName;
@@ -73,9 +74,9 @@ public class AuthController : Controller
             TempData["Error"] = "Please enter valid registration details.";
             return View();
         }
-        catch (InvalidOperationException ex)
+        catch (InvalidOperationException)
         {
-            TempData["Error"] = ex.Message;
+            TempData["Error"] = "Unable to create an account with these details.";
             return View();
         }
     }

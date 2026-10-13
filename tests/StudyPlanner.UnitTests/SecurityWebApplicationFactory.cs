@@ -19,14 +19,16 @@ public sealed class SecurityWebApplicationFactory : WebApplicationFactory<Progra
 {
     public SecurityTestStore Store { get; } = new();
     public TimeProvider Clock { get; init; } = TimeProvider.System;
+    public string EnvironmentName { get; init; } = "Testing";
+    public IReadOnlyDictionary<string, string?> Settings { get; init; } = new Dictionary<string, string?>();
 
     protected override void ConfigureWebHost(IWebHostBuilder builder)
     {
-        builder.UseEnvironment("Testing");
+        builder.UseEnvironment(EnvironmentName);
         builder.ConfigureAppConfiguration((_, config) => config.AddInMemoryCollection(new Dictionary<string, string?>
         {
             ["Serilog:MinimumLevel:Default"] = "Fatal"
-        }));
+        }).AddInMemoryCollection(Settings));
         builder.ConfigureTestServices(services =>
         {
             services.RemoveAll<TimeProvider>();
@@ -93,6 +95,8 @@ public sealed class SecurityTestStore
         UserRepository.Setup(r => r.GetByEmailAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
             .Callback(() => CredentialLookups++)
             .ReturnsAsync((string email, CancellationToken _) => Users.Values.FirstOrDefault(u => u.Email == email.ToLowerInvariant()));
+        UserRepository.Setup(r => r.GetByIdAsync(It.IsAny<Guid>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync((Guid id, CancellationToken _) => Users.GetValueOrDefault(id));
         UserRepository.Setup(r => r.ExistsByEmailAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync((string email, CancellationToken _) => Users.Values.Any(u => u.Email == email.ToLowerInvariant()));
         UserRepository.Setup(r => r.AddAsync(It.IsAny<User>(), It.IsAny<CancellationToken>()))

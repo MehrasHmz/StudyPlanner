@@ -6,6 +6,9 @@ using Serilog;
 using StudyPlanner.Application;
 using StudyPlanner.Infrastructure;
 using StudyPlanner.Infrastructure.Data;
+using Microsoft.AspNetCore.RateLimiting;
+using System.Threading.RateLimiting;
+using StudyPlanner.Web.Security;
 
 var builder = WebApplication.CreateBuilder(args);
 Log.Logger = new LoggerConfiguration().ReadFrom.Configuration(builder.Configuration).Enrich.FromLogContext().WriteTo.Console().WriteTo.File("logs/studyplanner-.log", rollingInterval: RollingInterval.Day).CreateLogger();
@@ -22,6 +25,27 @@ builder.Services.AddApplication();
 builder.Services.AddInfrastructure(builder.Configuration);
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
+builder.Services.AddScoped<ActiveUserCookieEvents>();
+builder.Services.AddRateLimiter(options =>
+{
+    void AddAuthenticationLimit(string policy, string setting, int defaultLimit)
+    {
+        var limit = builder.Configuration.GetValue<int?>(setting) ?? defaultLimit;
+        if (limit <= 0) throw new InvalidOperationException("Authentication rate limits must be positive.");
+        options.AddPolicy(policy, context => RateLimitPartition.GetFixedWindowLimiter(
+            context.Connection.RemoteIpAddress?.MapToIPv6().ToString() ?? "unknown",
+            _ => new FixedWindowRateLimiterOptions { PermitLimit = limit, Window = TimeSpan.FromMinutes(1), QueueLimit = 0, AutoReplenishment = true }));
+    }
+    AddAuthenticationLimit("auth-login", "Security:LoginAttemptsPerMinute", 10);
+    AddAuthenticationLimit("auth-register", "Security:RegistrationAttemptsPerMinute", 5);
+    options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
+    options.OnRejected = async (context, ct) =>
+    {
+        if (context.Lease.TryGetMetadata(MetadataName.RetryAfter, out var retry))
+            context.HttpContext.Response.Headers.RetryAfter = Math.Ceiling(retry.TotalSeconds).ToString(System.Globalization.CultureInfo.InvariantCulture);
+        await context.HttpContext.Response.WriteAsync("Too many authentication attempts. Please try again shortly.", ct);
+    };
+});
 
 builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
     .AddCookie(options =>
@@ -29,6 +53,11 @@ builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationSc
         options.LoginPath = "/Auth/Login";
         options.LogoutPath = "/Auth/Logout";
         options.ExpireTimeSpan = TimeSpan.FromDays(7);
+        options.Cookie.HttpOnly = true;
+        options.Cookie.SameSite = SameSiteMode.Lax;
+        options.Cookie.SecurePolicy = builder.Configuration.GetValue<bool>("Security:RequireSecureCookies")
+            ? CookieSecurePolicy.Always : CookieSecurePolicy.SameAsRequest;
+        options.EventsType = typeof(ActiveUserCookieEvents);
     });
 
 var app = builder.Build();
@@ -46,9 +75,19 @@ if (app.Environment.IsDevelopment())
     app.UseSwagger();
     app.UseSwaggerUI();
 }
+else if (!app.Environment.IsEnvironment("Testing"))
+{
+    app.UseExceptionHandler(error => error.Run(async context =>
+    {
+        context.Response.StatusCode = 500;
+        context.Response.ContentType = "text/plain";
+        await context.Response.WriteAsync("An unexpected error occurred. Please try again.");
+    }));
+}
 app.UseStaticFiles();
 app.UseRouting();
 app.UseAuthentication();
+app.UseRateLimiter();
 app.UseAuthorization();
 app.MapGet("/health/live", () => Results.Ok(new { status = "healthy" }));
 app.MapGet("/health/ready", async (AppDbContext db, CancellationToken ct) =>
