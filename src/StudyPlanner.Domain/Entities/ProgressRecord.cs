@@ -1,4 +1,5 @@
 using StudyPlanner.Domain.Common;
+using StudyPlanner.Domain.Services;
 
 namespace StudyPlanner.Domain.Entities;
 public class ProgressRecord : AuditableEntity
@@ -14,10 +15,10 @@ public class ProgressRecord : AuditableEntity
     public StudyItem StudyItem { get; private set; } = null!;
 
     private ProgressRecord() : base() { }
-    public ProgressRecord(Guid userId, Guid studyItemId, int minutesSpent, Guid? sessionId = null, double? score = null, string notes = "") : base()
+    public ProgressRecord(Guid userId, Guid studyItemId, int minutesSpent, Guid? sessionId = null, double? score = null, string notes = "", DateTime? completedAt = null) : base()
     {
         UserId = userId; StudyItemId = studyItemId; SessionId = sessionId;
-        CompletedAt = DateTime.UtcNow; MinutesSpent = minutesSpent;
+        CompletedAt = StudyReviewPolicy.AsUtc(completedAt ?? DateTime.UtcNow); MinutesSpent = minutesSpent;
         ResultScore = score; Notes = notes?.Trim() ?? string.Empty;
     }
 }

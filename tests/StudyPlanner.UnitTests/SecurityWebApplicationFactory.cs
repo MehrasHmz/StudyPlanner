@@ -17,6 +17,7 @@ namespace StudyPlanner.UnitTests;
 public sealed class SecurityWebApplicationFactory : WebApplicationFactory<Program>
 {
     public SecurityTestStore Store { get; } = new();
+    public TimeProvider Clock { get; init; } = TimeProvider.System;
 
     protected override void ConfigureWebHost(IWebHostBuilder builder)
     {
@@ -27,6 +28,8 @@ public sealed class SecurityWebApplicationFactory : WebApplicationFactory<Progra
         }));
         builder.ConfigureTestServices(services =>
         {
+            services.RemoveAll<TimeProvider>();
+            services.AddSingleton(Clock);
             services.RemoveAll<ILoggerFactory>();
             services.AddSingleton<ILoggerFactory>(NullLoggerFactory.Instance);
             services.AddDataProtection().UseEphemeralDataProtectionProvider();

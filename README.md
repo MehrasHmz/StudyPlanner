@@ -59,6 +59,16 @@ dotnet run --project src/StudyPlanner.Web -- --migrate-only
 
 No migration is generated or rewritten by Docker. Inspect migration logs and stop on failure.
 
+## Study Planning and Scheduled Reviews
+
+The dashboard's Plan session action opens a safe GET form at `/Sessions`; `/Sessions/Plan` also accepts GET without creating a session. Actual planning requires an authenticated, antiforgery-protected POST with 1-480 available minutes. Invalid input is shown in the form and does not create a session.
+
+Active unfinished items remain eligible under the existing duration/priority rules, even when their review date is in the future. Completed items become eligible again only when a scheduled review reaches its exact UTC timestamp (`NextReviewDate <= now`). A completed item without a review date remains completed and is not automatically due. Deleted and other users' items are excluded. Dashboard due counts cover active items with an arrived review date, including completed reviews; the count is not the number that fits a particular time budget.
+
+Successful session completion appends progress, keeps completed items completed, and schedules the next review seven days after completion. Earlier progress is not overwritten. Existing valid-subset completion and per-session concurrency/replay protection remain in place. Completion state and review readiness are independent, so an item can correctly display both Completed and Review due. Date-only form input is interpreted as midnight UTC; labels explicitly show UTC for scheduled dates.
+
+The application uses .NET's `TimeProvider` for planning, dashboard and completion timestamps. Tests supply a fixed clock. Focus Mode remains browser-local and never writes progress automatically.
+
 ## Tests
 
 ```sh
@@ -70,6 +80,8 @@ node --test tests/frontend/focus-timer.test.cjs
 Real PostgreSQL tests require `STUDYPLANNER_TEST_POSTGRES` pointing to an explicitly disposable PostgreSQL server with permission to create/drop databases. The fixtures create unpredictable test database names and remove only those databases. Without this variable, PostgreSQL declarations are skipped.
 
 Browser scripts in `tests/frontend` require Playwright and installed Chrome and create synthetic accounts/items. Their default port 5815 is intended for an isolated preview, not a database containing real user data.
+
+The new `tests/frontend/review-planning.test.cjs` defaults to loopback port 5816. It requires `STUDYPLANNER_REVIEW_TEST_DATABASE` named `studyplanner_phase6_browser_*` and `STUDYPLANNER_REVIEW_TEST_SOCKET` pointing to the isolated `/private/tmp/studyplanner-*` PostgreSQL socket (port 55439, role `studyplanner_test`). Start the preview against that same disposable database. It verifies navigation, two review cycles, invalid input, themes/responsiveness and Focus persistence, and writes screenshots/results under `/private/tmp/studyplanner-phase6-browser-evidence` by default. Its synthetic SQL setup must never target a production database.
 
 ## Continuous Integration
 

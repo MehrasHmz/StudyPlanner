@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using StudyPlanner.Application.Commands.Sessions;
 using StudyPlanner.Application.DTOs;
+using StudyPlanner.Web.Models;
 
 namespace StudyPlanner.Web.Controllers;
 [Authorize]
@@ -12,20 +13,25 @@ public class SessionsController : BaseController
     private readonly IMediator _mediator;
     public SessionsController(IMediator mediator) => _mediator = mediator;
 
-    public IActionResult Index() => View();
+    [HttpGet]
+    public IActionResult Index() => View(new PlanSessionViewModel { AvailableMinutes = 45 });
+
+    [HttpGet]
+    public IActionResult Plan() => View("Index", new PlanSessionViewModel { AvailableMinutes = 45 });
 
     [HttpPost]
-    public async Task<IActionResult> Plan(int AvailableMinutes)
+    public async Task<IActionResult> Plan(PlanSessionViewModel model)
     {
+        if (!ModelState.IsValid) return View("Index", model);
         try
         {
-            var result = await _mediator.Send(new PlanSessionCommand(GetUserId(), AvailableMinutes));
+            var result = await _mediator.Send(new PlanSessionCommand(GetUserId(), model.AvailableMinutes), HttpContext.RequestAborted);
             return View("Plan", result);
         }
-        catch (Exception ex)
+        catch (ValidationException ex)
         {
-            TempData["Error"] = ex.Message;
-            return RedirectToAction(nameof(Index));
+            foreach (var error in ex.Errors) ModelState.AddModelError(error.PropertyName, error.ErrorMessage);
+            return View("Index", model);
         }
     }
 

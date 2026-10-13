@@ -1,6 +1,7 @@
 using FluentValidation;
 using MediatR;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection.Extensions;
 using System.Reflection;
 using StudyPlanner.Application.Behaviors;
 using StudyPlanner.Domain.Interfaces;
@@ -15,6 +16,7 @@ public static class DependencyInjection
         services.AddValidatorsFromAssembly(Assembly.GetExecutingAssembly());
         services.AddTransient(typeof(IPipelineBehavior<,>), typeof(ValidationBehavior<,>));
         services.AddSingleton<IStudySessionPlanner, StudySessionPlanner>();
+        services.TryAddSingleton(TimeProvider.System);
         return services;
     }
 }

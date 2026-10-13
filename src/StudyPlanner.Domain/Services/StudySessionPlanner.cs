@@ -8,7 +8,8 @@ public class StudySessionPlanner : IStudySessionPlanner
     {
         if (available == null || available.Count == 0 || minutes <= 0) return Array.Empty<StudyItem>();
 
-        var candidates = available.Where(i => !i.IsCompleted && i.EstimatedDurationMinutes <= minutes).ToList();
+        now = StudyReviewPolicy.AsUtc(now);
+        var candidates = available.Where(i => i.IsEligibleForStudy(now) && i.EstimatedDurationMinutes <= minutes).ToList();
         if (candidates.Count == 0) return Array.Empty<StudyItem>();
 
         var scored = candidates.Select(i => new { Item = i, Score = CalculateScore(i, now) })

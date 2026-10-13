@@ -1,5 +1,6 @@
 using StudyPlanner.Domain.Common;
 using StudyPlanner.Domain.Enums;
+using StudyPlanner.Domain.Services;
 
 namespace StudyPlanner.Domain.Entities;
 public class StudyItem : AuditableEntity
@@ -42,8 +43,9 @@ public class StudyItem : AuditableEntity
     public void MarkIncomplete() { IsCompleted = false; NextReviewDate = DateTime.UtcNow; }
     public void SoftDelete() => IsDeleted = true;
     public void Restore() => IsDeleted = false;
-    public bool IsDueForReview(DateTime now) => NextReviewDate.HasValue && NextReviewDate.Value <= now;
+    public bool IsDueForReview(DateTime now) => !IsDeleted && StudyReviewPolicy.IsDue(NextReviewDate, now);
+    public bool IsEligibleForStudy(DateTime now) => !IsDeleted && (!IsCompleted || IsDueForReview(now));
     public int GetDifficultyWeight() => Difficulty switch { DifficultyLevel.Beginner => 1, DifficultyLevel.Intermediate => 2, DifficultyLevel.Advanced => 3, _ => 1 };
 
-    private static DateTime? ToUtc(DateTime? d) => d.HasValue ? DateTime.SpecifyKind(d.Value, DateTimeKind.Utc) : null;
+    private static DateTime? ToUtc(DateTime? d) => d.HasValue ? StudyReviewPolicy.AsUtc(d.Value) : null;
 }

@@ -3,6 +3,7 @@ using StudyPlanner.Application.Commands.Sessions;
 using StudyPlanner.Domain.Common;
 using StudyPlanner.Domain.Entities;
 using StudyPlanner.Domain.Interfaces;
+using StudyPlanner.Domain.Services;
 using StudyPlanner.Infrastructure.Data;
 
 namespace StudyPlanner.Infrastructure.Repositories;
@@ -41,7 +42,7 @@ public class StudyItemRepository : Repository<StudyItem>, IStudyItemRepository
         await _ctx.StudyItems.AsNoTracking().Include(s => s.Category).Where(s => s.UserId == userId).ToListAsync(ct);
     public async Task<IReadOnlyList<StudyItem>> GetDueForReviewAsync(Guid userId, DateTime now, CancellationToken ct = default) =>
         await _ctx.StudyItems.AsNoTracking().Include(s => s.Category)
-            .Where(s => s.UserId == userId && !s.IsCompleted && s.NextReviewDate.HasValue && s.NextReviewDate <= now).ToListAsync(ct);
+            .Where(s => s.UserId == userId).Where(StudyReviewPolicy.DueAt(now)).ToListAsync(ct);
     public async Task<StudyItem?> GetWithDetailsAsync(Guid id, CancellationToken ct = default) =>
         await _ctx.StudyItems.Include(s => s.Category).Include(s => s.User).FirstOrDefaultAsync(s => s.Id == id, ct);
     public async Task<(IReadOnlyList<StudyItem> Items, int Total)> GetPagedAsync(Guid userId, int page, int size, string? search, string? sortBy, bool desc, CancellationToken ct = default)

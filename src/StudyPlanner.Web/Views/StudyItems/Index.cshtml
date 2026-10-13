@@ -1,5 +1,6 @@
 @model StudyPlanner.Application.DTOs.PaginatedResult<StudyPlanner.Application.DTOs.StudyItemDto>
-@{ ViewData["Title"] = "Study Items"; }
+@inject TimeProvider Clock
+@{ ViewData["Title"] = "Study Items"; var reviewNow = Clock.GetUtcNow().UtcDateTime; }
 
 <div class="container py-4 study-items-page">
     <div class="section-header">
@@ -71,7 +72,11 @@
                                     </td>
                                     <td><span class="badge bg-primary">P@(item.Priority)</span></td>
                                     <td>@item.EstimatedDurationMinutes min</td>
-                                    <td>@(item.NextReviewDate?.ToString("MMM dd") ?? "—")</td>
+                                    <td>
+                                        @if (item.IsDueForReview(reviewNow)) { <span class="badge bg-warning">Review due</span> }
+                                        else if (item.NextReviewDate.HasValue) { <span>Scheduled @item.NextReviewDate.Value.ToString("MMM dd, yyyy", System.Globalization.CultureInfo.InvariantCulture) UTC</span> }
+                                        else { <span class="text-muted">Not scheduled</span> }
+                                    </td>
                                     <td>
                                         <form asp-action="ToggleComplete" method="post" class="item-status-form">
                                             <input type="hidden" name="id" value="@item.Id" />

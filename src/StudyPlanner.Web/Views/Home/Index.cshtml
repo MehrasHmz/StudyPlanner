@@ -13,7 +13,10 @@
             @if (Model.RecentItems.Any())
             {
                 @foreach (var item in Model.RecentItems)
-                { <div class="recent-item"><div><a class="recent-item-title" asp-controller="StudyItems" asp-action="Edit" asp-route-id="@item.Id">@item.Title</a><div class="item-meta"><span>@item.Type</span><span>@item.EstimatedDurationMinutes min</span><span class="badge bg-@(item.IsCompleted ? "success" : "secondary")">@(item.IsCompleted ? "Completed" : "Pending")</span></div></div><a class="icon-button" asp-controller="Focus" asp-action="Index" asp-route-itemId="@item.Id" title="Focus on @item.Title" aria-label="Focus on @item.Title"><i class="bi bi-play" aria-hidden="true"></i></a></div> }
+                { <div class="recent-item"><div><a class="recent-item-title" asp-controller="StudyItems" asp-action="Edit" asp-route-id="@item.Id">@item.Title</a><div class="item-meta"><span>@item.Type</span><span>@item.EstimatedDurationMinutes min</span><span class="badge bg-@(item.IsCompleted ? "success" : "secondary")">@(item.IsCompleted ? "Completed" : "Pending")</span>
+                    @if (item.IsDueForReview(Model.AsOfUtc)) { <span class="badge bg-warning">Review due</span> }
+                    else if (item.NextReviewDate.HasValue) { <span>Review @item.NextReviewDate.Value.ToString("MMM dd, yyyy", System.Globalization.CultureInfo.InvariantCulture) UTC</span> }
+                </div></div><a class="icon-button" asp-controller="Focus" asp-action="Index" asp-route-itemId="@item.Id" title="Focus on @item.Title" aria-label="Focus on @item.Title"><i class="bi bi-play" aria-hidden="true"></i></a></div> }
             }
             else { <div class="empty-state"><i class="bi bi-journal-plus d-block" aria-hidden="true"></i><h3>A fresh start.</h3><a class="btn btn-primary" asp-controller="StudyItems" asp-action="Create">Add a study item</a></div> }
         </section>

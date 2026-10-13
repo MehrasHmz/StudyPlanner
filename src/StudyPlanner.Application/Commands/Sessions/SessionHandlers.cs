@@ -3,6 +3,7 @@ using StudyPlanner.Application.DTOs;
 using StudyPlanner.Domain.Entities;
 using StudyPlanner.Domain.Enums;
 using StudyPlanner.Domain.Interfaces;
+using StudyPlanner.Domain.Services;
 
 namespace StudyPlanner.Application.Commands.Sessions;
 public class PlanSessionHandler : IRequestHandler<PlanSessionCommand, StudySessionDto>
@@ -10,14 +11,16 @@ public class PlanSessionHandler : IRequestHandler<PlanSessionCommand, StudySessi
     private readonly IStudySessionRepository _sessionRepo;
     private readonly IStudyItemRepository _itemRepo;
     private readonly IStudySessionPlanner _planner;
-    public PlanSessionHandler(IStudySessionRepository sessionRepo, IStudyItemRepository itemRepo, IStudySessionPlanner planner)
-    { _sessionRepo = sessionRepo; _itemRepo = itemRepo; _planner = planner; }
+    private readonly TimeProvider _clock;
+    public PlanSessionHandler(IStudySessionRepository sessionRepo, IStudyItemRepository itemRepo, IStudySessionPlanner planner, TimeProvider? clock = null)
+    { _sessionRepo = sessionRepo; _itemRepo = itemRepo; _planner = planner; _clock = clock ?? TimeProvider.System; }
 
     public async Task<StudySessionDto> Handle(PlanSessionCommand r, CancellationToken ct)
     {
-        var session = new StudySession(r.UserId, DateTime.UtcNow, r.AvailableMinutes);
+        var now = _clock.GetUtcNow().UtcDateTime;
+        var session = new StudySession(r.UserId, now, r.AvailableMinutes);
         var items = await _itemRepo.GetByUserIdAsync(r.UserId, ct);
-        var selected = _planner.SelectItems(items, r.AvailableMinutes, DateTime.UtcNow);
+        var selected = _planner.SelectItems(items.Where(i => i.UserId == r.UserId).ToList(), r.AvailableMinutes, now);
         int order = 1;
         foreach (var item in selected)
         {
@@ -37,8 +40,9 @@ public class CompleteSessionHandler : IRequestHandler<CompleteSessionCommand>
     private readonly IStudySessionRepository _sessionRepo;
     private readonly IStudyItemRepository _itemRepo;
     private readonly IProgressRecordRepository _progressRepo;
-    public CompleteSessionHandler(IStudySessionRepository sessionRepo, IStudyItemRepository itemRepo, IProgressRecordRepository progressRepo)
-    { _sessionRepo = sessionRepo; _itemRepo = itemRepo; _progressRepo = progressRepo; }
+    private readonly TimeProvider _clock;
+    public CompleteSessionHandler(IStudySessionRepository sessionRepo, IStudyItemRepository itemRepo, IProgressRecordRepository progressRepo, TimeProvider? clock = null)
+    { _sessionRepo = sessionRepo; _itemRepo = itemRepo; _progressRepo = progressRepo; _clock = clock ?? TimeProvider.System; }
 
     public async Task Handle(CompleteSessionCommand r, CancellationToken ct)
     {
@@ -65,12 +69,13 @@ public class CompleteSessionHandler : IRequestHandler<CompleteSessionCommand>
             items.Add((result, item));
         }
 
+        var completedAt = _clock.GetUtcNow().UtcDateTime;
         session.StartSession();
         foreach (var (result, item) in items)
         {
-            await _progressRepo.AddAsync(new ProgressRecord(session.UserId, result.StudyItemId, result.MinutesSpent, session.Id, result.Score, result.Notes ?? string.Empty), ct);
+            await _progressRepo.AddAsync(new ProgressRecord(session.UserId, result.StudyItemId, result.MinutesSpent, session.Id, result.Score, result.Notes ?? string.Empty, completedAt), ct);
             item.MarkCompleted();
-            item.SetNextReviewDate(DateTime.UtcNow.AddDays(7));
+            item.SetNextReviewDate(StudyReviewPolicy.NextReviewAfter(completedAt));
             _itemRepo.Update(item);
         }
         session.CompleteSession();

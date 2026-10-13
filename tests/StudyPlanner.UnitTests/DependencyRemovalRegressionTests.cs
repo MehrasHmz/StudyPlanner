@@ -69,7 +69,8 @@ public class DependencyRemovalRegressionTests
     [Fact]
     public async Task ManualQueryMappings_PreserveStudyItemCategoryAndDashboardDtos()
     {
-        using var factory = new SecurityWebApplicationFactory();
+        var clock = new ReviewTestClock();
+        using var factory = new SecurityWebApplicationFactory { Clock = clock };
         using var scope = factory.Services.CreateScope();
         var mediator = scope.ServiceProvider.GetRequiredService<IMediator>();
         var store = factory.Store;
@@ -88,7 +89,7 @@ public class DependencyRemovalRegressionTests
         categories.Items.Should().ContainSingle().Which.Should().Be(new CategoryDto(store.Category.Id,
             "Test category", "Test description"));
         categories.Total.Should().Be(1);
-        dashboard.Should().BeEquivalentTo(new DashboardDto(1, 0, 0, 1, 0, new() { expectedItem }));
+        dashboard.Should().BeEquivalentTo(new DashboardDto(1, 0, 0, 1, 0, new() { expectedItem }) { AsOfUtc = clock.Now.UtcDateTime });
     }
 
     [Fact]

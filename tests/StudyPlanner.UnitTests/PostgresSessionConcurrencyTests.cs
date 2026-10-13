@@ -19,13 +19,17 @@ public class PostgresSessionConcurrencyTests : IClassFixture<PostgresTestDatabas
     public PostgresSessionConcurrencyTests(PostgresTestDatabase database) => _database = database;
 
     [PostgresTheory]
-    [InlineData(false, false)]
-    [InlineData(true, false)]
-    [InlineData(false, true)]
-    [InlineData(true, true)]
-    public async Task OverlappingCompletions_CommitExactlyOneWinningResultSet(bool disjointSubsets, bool singleStatementBatches)
+    [InlineData(false, false, false)]
+    [InlineData(true, false, false)]
+    [InlineData(false, true, false)]
+    [InlineData(true, true, false)]
+    [InlineData(false, false, true)]
+    [InlineData(true, false, true)]
+    [InlineData(false, true, true)]
+    [InlineData(true, true, true)]
+    public async Task OverlappingCompletions_CommitExactlyOneWinningResultSet(bool disjointSubsets, bool singleStatementBatches, bool reviewing)
     {
-        var data = await Seed();
+        var data = await Seed(reviewing);
         var first = Command(data, "first", 21);
         var second = Command(data, "second", 37);
         if (disjointSubsets)
@@ -57,6 +61,13 @@ public class PostgresSessionConcurrencyTests : IClassFixture<PostgresTestDatabas
         // Reusing a failed scope cannot accidentally persist its abandoned graph.
         (await new StudySessionRepository(loserContext).SaveChangesAsync(timeout.Token)).Should().Be(0);
         await AssertCompleted(data, winner);
+        if (reviewing)
+        {
+            await using var history = _database.CreateContext();
+            var records = await history.ProgressRecords.Where(record => record.UserId == data.Owner).ToListAsync();
+            records.Should().HaveCount(2 + winner.Results.Count);
+            records.Count(record => record.Notes == "Original learning").Should().Be(2);
+        }
         sql.Commands.Count(command => command.Contains("UPDATE \"StudySessions\"", StringComparison.Ordinal))
             .Should().Be(2);
         sql.Commands.Where(command => command.Contains("UPDATE \"StudySessions\"", StringComparison.Ordinal))
@@ -233,7 +244,7 @@ public class PostgresSessionConcurrencyTests : IClassFixture<PostgresTestDatabas
         await AssertCompleted(data, Command(data));
     }
 
-    private async Task<SeedData> Seed()
+    private async Task<SeedData> Seed(bool reviewing = false)
     {
         await using var context = _database.CreateContext();
         var user = new User("Concurrency Test", Guid.NewGuid() + "@example.test", "test-only-hash");
@@ -246,6 +257,14 @@ public class PostgresSessionConcurrencyTests : IClassFixture<PostgresTestDatabas
         context.Users.Add(user);
         context.Categories.Add(category);
         context.StudyItems.AddRange(items);
+        if (reviewing)
+        {
+            foreach (var item in items)
+            {
+                item.MarkCompleted(); item.SetNextReviewDate(new DateTime(2026, 10, 1, 0, 0, 0, DateTimeKind.Utc));
+                context.ProgressRecords.Add(new ProgressRecord(user.Id, item.Id, 10, notes: "Original learning"));
+            }
+        }
         context.StudySessions.Add(session);
         await context.SaveChangesAsync();
         return new SeedData(user.Id, session, items);
@@ -276,10 +295,12 @@ public class PostgresSessionConcurrencyTests : IClassFixture<PostgresTestDatabas
         var storedItems = await verify.StudyItems.IgnoreQueryFilters().Where(item => ids.Contains(item.Id)).ToListAsync();
         foreach (var item in storedItems)
         {
-            var completed = winner.Results.Any(result => result.StudyItemId == item.Id);
+            var completed = winner.Results.Any(result => result.StudyItemId == item.Id) || data.Items.Single(original => original.Id == item.Id).IsCompleted;
             item.IsCompleted.Should().Be(completed);
             if (completed) item.NextReviewDate.Should().NotBeNull();
             else item.NextReviewDate.Should().BeNull();
+            if (!winner.Results.Any(result => result.StudyItemId == item.Id))
+                item.NextReviewDate.Should().Be(data.Items.Single(original => original.Id == item.Id).NextReviewDate);
             item.Title.Should().Be(data.Items.Single(original => original.Id == item.Id).Title);
         }
     }
