@@ -34,8 +34,20 @@ let browser;
     assert.ok(healthy, 'Readiness recovers after recreation');
     await page.goto(base + '/');
     assert.ok((await page.locator('.nav-user').textContent()).includes('Docker Persistence Test'), 'Authentication cookie survives recreation');
+    const sql = query => execFileSync('docker', ['compose', '-p', project, 'exec', '-T', 'postgres', 'sh', '-c',
+        'exec psql -U "$POSTGRES_USER" -d "$POSTGRES_DB" -At -v ON_ERROR_STOP=1 -c "$1"', 'sh', query], { encoding: 'utf8' }).trim();
+    const id = sql(`SELECT "Id" FROM "Users" WHERE "Email"='${email}'`);
+    assert.match(id, /^[a-f0-9-]{36}$/);
+    const provision = role => execFileSync('docker', ['compose', '-p', project, 'run', '--rm', '--no-deps', 'api',
+        '--manage-user-role', '--user-id', id, '--role', role, '--operator', 'docker-smoke-operator', '--reason', 'Synthetic container authorization verification', '--confirm'], { stdio: 'pipe' });
+    assert.equal((await page.request.get(base + '/Categories/Create')).status(), 403);
+    provision('administrator');
+    assert.equal((await page.request.get(base + '/Categories/Create')).status(), 200);
+    provision('regular');
+    assert.equal((await page.request.get(base + '/Categories/Create')).status(), 403);
+    assert.equal(sql(`SELECT count(*) FROM "RoleChangeAudits" WHERE "UserId"='${id}'`), '2');
     await page.goto(base + '/Focus');
     assert.ok(await page.locator('#focusExperience').count());
     assert.equal(errors.length, 0);
-    console.log(JSON.stringify({ readiness: true, registrationAndLogin: true, cookieSurvivesRecreation: true, focus: true, javascriptErrors: errors.length }));
+    console.log(JSON.stringify({ readiness: true, registrationAndLogin: true, cookieSurvivesRecreation: true, operatorGrant: true, immediateRevocation: true, durableAudit: true, focus: true, javascriptErrors: errors.length }));
 })().catch(error => { console.error(error); process.exitCode = 1; }).finally(async () => { await browser?.close(); });

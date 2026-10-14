@@ -22,6 +22,13 @@ public class Repository<T> : IRepository<T> where T : Entity
 public class UserRepository : Repository<User>, IUserRepository
 {
     public UserRepository(AppDbContext ctx) : base(ctx) { }
+    public override void Update(User user)
+    {
+        base.Update(user);
+        // Ordinary account/password updates must not overwrite a concurrent operator revocation.
+        _ctx.Entry(user).Property(u => u.Role).IsModified = false;
+        _ctx.Entry(user).Property(u => u.IsActive).IsModified = false;
+    }
     public override async Task<User?> GetByIdAsync(Guid id, CancellationToken ct = default) =>
         await _ctx.Users.AsNoTracking().FirstOrDefaultAsync(u => u.Id == id, ct);
     public async Task<User?> GetByEmailAsync(string email, CancellationToken ct = default) =>

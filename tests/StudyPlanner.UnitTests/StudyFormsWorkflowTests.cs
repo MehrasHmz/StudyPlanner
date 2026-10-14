@@ -2,6 +2,7 @@ using System.Net;
 using System.Text.RegularExpressions;
 using FluentAssertions;
 using StudyPlanner.Domain.Entities;
+using StudyPlanner.Domain.Enums;
 
 namespace StudyPlanner.UnitTests;
 
@@ -47,6 +48,7 @@ public class StudyFormsWorkflowTests
     public async Task CategoryDescription_IsReallyOptional(string action)
     {
         using var factory = new SecurityWebApplicationFactory(); using var client = factory.NewClient(); await SignIn(client);
+        factory.Store.Owner.SetRole(UserRole.Administrator);
         var path = "/Categories/" + action;
         var values = new Dictionary<string, string> { ["Id"] = factory.Store.Category.Id.ToString(), ["Name"] = "Networks", ["Description"] = "" };
         values["__RequestVerificationToken"] = await Token(client, action == "Edit" ? path + "/" + factory.Store.Category.Id : path);
@@ -59,6 +61,7 @@ public class StudyFormsWorkflowTests
     public async Task CategoryEdit_EnforcesLimitsAndPreservesAttemptedInput()
     {
         using var factory = new SecurityWebApplicationFactory(); using var client = factory.NewClient(); await SignIn(client);
+        factory.Store.Owner.SetRole(UserRole.Administrator);
         var token = await Token(client, "/Categories/Edit/" + factory.Store.Category.Id);
         var writes = factory.Store.Writes;
         using var response = await client.PostAsync("/Categories/Edit", new FormUrlEncodedContent(new Dictionary<string, string>
@@ -74,6 +77,7 @@ public class StudyFormsWorkflowTests
     public async Task CategoryEdit_IsNotLimitedToFirstHundredAndRejectsDeletedCategories()
     {
         using var factory = new SecurityWebApplicationFactory(); using var client = factory.NewClient(); await SignIn(client);
+        factory.Store.Owner.SetRole(UserRole.Administrator);
         for (var index = 0; index < 105; index++) { var category = new Category("Category " + index); factory.Store.Categories.Add(category.Id, category); }
         var last = factory.Store.Categories.Values.Last();
         using var response = await client.GetAsync("/Categories/Edit/" + last.Id);

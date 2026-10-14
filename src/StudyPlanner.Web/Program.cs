@@ -9,8 +9,10 @@ using StudyPlanner.Infrastructure.Data;
 using Microsoft.AspNetCore.RateLimiting;
 using System.Threading.RateLimiting;
 using StudyPlanner.Web.Security;
+using StudyPlanner.Application.Authorization;
+using Microsoft.AspNetCore.Authorization;
 
-var builder = WebApplication.CreateBuilder(args);
+var builder = WebApplication.CreateBuilder(args.Contains("--manage-user-role", StringComparer.Ordinal) ? Array.Empty<string>() : args);
 Log.Logger = new LoggerConfiguration().ReadFrom.Configuration(builder.Configuration).Enrich.FromLogContext().WriteTo.Console().WriteTo.File("logs/studyplanner-.log", rollingInterval: RollingInterval.Day).CreateLogger();
 builder.Host.UseSerilog();
 
@@ -26,6 +28,11 @@ builder.Services.AddInfrastructure(builder.Configuration);
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 builder.Services.AddScoped<ActiveUserCookieEvents>();
+builder.Services.AddHttpContextAccessor();
+builder.Services.AddScoped<ICurrentUser, HttpCurrentUser>();
+builder.Services.AddScoped<IAuthorizationHandler, CategoryManagementAuthorization>();
+builder.Services.AddAuthorization(options => options.AddPolicy(CategoryManagementRequirement.Policy,
+    policy => policy.RequireAuthenticatedUser().AddRequirements(new CategoryManagementRequirement())));
 builder.Services.AddRateLimiter(options =>
 {
     void AddAuthenticationLimit(string policy, string setting, int defaultLimit)
@@ -61,6 +68,11 @@ builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationSc
     });
 
 var app = builder.Build();
+if (args.Contains("--manage-user-role", StringComparer.Ordinal))
+{
+    Environment.ExitCode = await RoleProvisioningCommand.RunAsync(args, app.Services, Console.Out);
+    return;
+}
 if (args.Contains("--migrate-only", StringComparer.Ordinal))
 {
     using var scope = app.Services.CreateScope();
@@ -77,6 +89,8 @@ if (app.Environment.IsDevelopment())
 }
 else if (!app.Environment.IsEnvironment("Testing"))
 {
+    using (var scope = app.Services.CreateScope())
+        await scope.ServiceProvider.GetRequiredService<IDatabaseSchemaCheck>().VerifyAsync();
     app.UseExceptionHandler(error => error.Run(async context =>
     {
         context.Response.StatusCode = 500;

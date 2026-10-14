@@ -17,7 +17,7 @@ namespace StudyPlanner.Infrastructure.Migrations
         {
 #pragma warning disable 612, 618
             modelBuilder
-                .HasAnnotation("ProductVersion", "8.0.0")
+                .HasAnnotation("ProductVersion", "8.0.31")
                 .HasAnnotation("Relational:MaxIdentifierLength", 63);
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
@@ -112,6 +112,44 @@ namespace StudyPlanner.Infrastructure.Migrations
                     b.HasIndex("UserId");
 
                     b.ToTable("ProgressRecords");
+                });
+
+            modelBuilder.Entity("StudyPlanner.Domain.Entities.RoleChangeAudit", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("ChangedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int>("NewRole")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("Operator")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<int>("PreviousRole")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("Reason")
+                        .IsRequired()
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("UserId", "ChangedAt");
+
+                    b.ToTable("RoleChangeAudits", null, t =>
+                        {
+                            t.HasCheckConstraint("CK_RoleChangeAudits_Roles", "\"PreviousRole\" IN (0, 1) AND \"NewRole\" IN (0, 1)");
+                        });
                 });
 
             modelBuilder.Entity("StudyPlanner.Domain.Entities.StudyItem", b =>
@@ -330,6 +368,11 @@ namespace StudyPlanner.Infrastructure.Migrations
                         .HasMaxLength(500)
                         .HasColumnType("character varying(500)");
 
+                    b.Property<int>("Role")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
+                        .HasDefaultValue(0);
+
                     b.Property<DateTime?>("UpdatedAt")
                         .HasColumnType("timestamp with time zone");
 
@@ -338,7 +381,10 @@ namespace StudyPlanner.Infrastructure.Migrations
                     b.HasIndex("Email")
                         .IsUnique();
 
-                    b.ToTable("Users");
+                    b.ToTable("Users", null, t =>
+                        {
+                            t.HasCheckConstraint("CK_Users_Role", "\"Role\" IN (0, 1)");
+                        });
 
                     b.HasData(
                         new
@@ -348,7 +394,8 @@ namespace StudyPlanner.Infrastructure.Migrations
                             Email = "demo@studyplanner.com",
                             FullName = "Demo User",
                             IsActive = true,
-                            PasswordHash = "ijB+qBaQa257yaJeoHCrzR/fBHVJ4IHm+mpkiCk7GY0="
+                            PasswordHash = "ijB+qBaQa257yaJeoHCrzR/fBHVJ4IHm+mpkiCk7GY0=",
+                            Role = 0
                         });
                 });
 
@@ -369,6 +416,15 @@ namespace StudyPlanner.Infrastructure.Migrations
                     b.Navigation("StudyItem");
 
                     b.Navigation("User");
+                });
+
+            modelBuilder.Entity("StudyPlanner.Domain.Entities.RoleChangeAudit", b =>
+                {
+                    b.HasOne("StudyPlanner.Domain.Entities.User", null)
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
                 });
 
             modelBuilder.Entity("StudyPlanner.Domain.Entities.StudyItem", b =>

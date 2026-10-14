@@ -5,6 +5,8 @@ using Microsoft.AspNetCore.Mvc;
 using StudyPlanner.Application.Commands.Categories;
 using StudyPlanner.Application.DTOs;
 using StudyPlanner.Application.Queries.Categories;
+using StudyPlanner.Application.Authorization;
+using StudyPlanner.Web.Security;
 
 namespace StudyPlanner.Web.Controllers;
 [Authorize]
@@ -19,12 +21,14 @@ public class CategoriesController : BaseController
         return View(result);
     }
 
+    [Authorize(Policy = CategoryManagementRequirement.Policy)]
     public IActionResult Create()
     {
         ViewBag.Errors = new List<string>();
         return View();
     }
 
+    [Authorize(Policy = CategoryManagementRequirement.Policy)]
     public async Task<IActionResult> Edit(Guid id)
     {
         var cat = await _mediator.Send(new GetCategoryByIdQuery(id), HttpContext.RequestAborted);
@@ -33,7 +37,7 @@ public class CategoriesController : BaseController
         return View(cat);
     }
 
-    [HttpPost]
+    [HttpPost, Authorize(Policy = CategoryManagementRequirement.Policy)]
     public async Task<IActionResult> Create(CreateCategoryCommand cmd)
     {
         if (!ModelState.IsValid) return View(cmd);
@@ -49,6 +53,7 @@ public class CategoriesController : BaseController
             foreach (var error in ex.Errors) ModelState.AddModelError(error.PropertyName, error.ErrorMessage);
             return View(cmd);
         }
+        catch (CategoryManagementDeniedException) { return Forbid(); }
         catch (Exception ex)
         {
             HttpContext.RequestServices?.GetService<ILogger<CategoriesController>>()?.LogError(ex, "Category creation failed.");
@@ -57,7 +62,7 @@ public class CategoriesController : BaseController
         }
     }
 
-    [HttpPost]
+    [HttpPost, Authorize(Policy = CategoryManagementRequirement.Policy)]
     public async Task<IActionResult> Edit(UpdateCategoryCommand cmd)
     {
         var existing = await _mediator.Send(new GetCategoryByIdQuery(cmd.Id), HttpContext.RequestAborted);
@@ -75,6 +80,7 @@ public class CategoriesController : BaseController
             foreach (var error in ex.Errors) ModelState.AddModelError(error.PropertyName, error.ErrorMessage);
             return View(existing);
         }
+        catch (CategoryManagementDeniedException) { return Forbid(); }
         catch (Exception ex)
         {
             HttpContext.RequestServices?.GetService<ILogger<CategoriesController>>()?.LogError(ex, "Category update failed.");
@@ -83,10 +89,11 @@ public class CategoriesController : BaseController
         }
     }
 
-    [HttpPost]
+    [HttpPost, Authorize(Policy = CategoryManagementRequirement.Policy)]
     public async Task<IActionResult> Delete(Guid id)
     {
         try { await _mediator.Send(new DeleteCategoryCommand(id)); }
+        catch (CategoryManagementDeniedException) { return Forbid(); }
         catch (KeyNotFoundException) { return NotFound(); }
         catch (InvalidOperationException)
         {

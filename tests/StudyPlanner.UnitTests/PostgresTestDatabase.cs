@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Diagnostics;
+using Microsoft.EntityFrameworkCore.Infrastructure;
 using Npgsql;
 using StudyPlanner.Infrastructure.Data;
 
@@ -30,6 +31,7 @@ public sealed class PostgresTestDatabase : IAsyncLifetime
     private readonly string _name = "studyplanner_phase3_" + Guid.NewGuid().ToString("N");
     private string? _testConnection;
     private bool _created;
+    public bool InitialMigrationOnly { get; init; }
 
     public async Task InitializeAsync()
     {
@@ -48,7 +50,9 @@ public sealed class PostgresTestDatabase : IAsyncLifetime
         try
         {
             await using var context = CreateContext();
-            await context.Database.MigrateAsync();
+            if (InitialMigrationOnly)
+                await context.GetService<Microsoft.EntityFrameworkCore.Migrations.IMigrator>().MigrateAsync("20260712092810_InitialCreate");
+            else await context.Database.MigrateAsync();
         }
         catch
         {

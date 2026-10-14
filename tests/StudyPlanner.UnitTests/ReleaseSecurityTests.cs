@@ -98,6 +98,7 @@ public class ReleaseSecurityTests
     public async Task ReferencedCategoryDeletion_IsBlockedWithoutChangingSharedOwnershipPolicy()
     {
         using var factory = new SecurityWebApplicationFactory();
+        factory.Store.Owner.SetRole(StudyPlanner.Domain.Enums.UserRole.Administrator);
         factory.Store.CategoryRepository.Setup(r => r.HasStudyItemsAsync(factory.Store.Category.Id, It.IsAny<CancellationToken>())).ReturnsAsync(true);
         using var client = factory.NewClient(); await ProgressHistoryTests.SignIn(client);
         var token = await ProgressHistoryTests.Token(client, "/Categories"); var writes = factory.Store.Writes;

@@ -32,7 +32,7 @@ public class LoginHandler : IRequestHandler<LoginCommand, AuthDto>
     {
         var user = await _users.GetByEmailAsync(r.Email, ct)
             ?? throw new UnauthorizedAccessException("Invalid credentials.");
-        if (!user.IsActive) throw new UnauthorizedAccessException("Invalid credentials.");
+        if (!user.IsActive || !Enum.IsDefined(user.Role)) throw new UnauthorizedAccessException("Invalid credentials.");
         var verification = _passwords.VerifyPassword(user, r.Password);
         if (verification == PasswordVerificationOutcome.Failed)
             throw new UnauthorizedAccessException("Invalid credentials.");

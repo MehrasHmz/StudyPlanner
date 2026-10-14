@@ -24,6 +24,7 @@ public class AntiforgeryIntegrationTests
     public async Task UnsafePost_RejectsMissingInvalidOrMismatchedTokenBeforeMutations(string action, string kind)
     {
         using var factory = new SecurityWebApplicationFactory();
+        if (action.StartsWith("/Categories/")) factory.Store.Owner.SetRole(UserRole.Administrator);
         using var client = factory.NewClient();
         if (RequiresAuthentication(action)) await SignIn(client);
         var token = await GetToken(client, FormPage(action, factory.Store));
@@ -58,6 +59,7 @@ public class AntiforgeryIntegrationTests
     public async Task ValidRazorToken_AllowsIntendedActionAndPreservesWorkflow(string action)
     {
         using var factory = new SecurityWebApplicationFactory();
+        if (action.StartsWith("/Categories/")) factory.Store.Owner.SetRole(UserRole.Administrator);
         using var client = factory.NewClient();
         if (RequiresAuthentication(action)) await SignIn(client);
         var token = await GetToken(client, FormPage(action, factory.Store));
@@ -100,6 +102,7 @@ public class AntiforgeryIntegrationTests
     public async Task RenderedPostForms_ContainExactlyOneFrameworkToken(string action)
     {
         using var factory = new SecurityWebApplicationFactory();
+        if (action.StartsWith("/Categories/")) factory.Store.Owner.SetRole(UserRole.Administrator);
         using var client = factory.NewClient();
         if (RequiresAuthentication(action)) await SignIn(client);
 

@@ -1,10 +1,11 @@
 @model StudyPlanner.Web.Models.StudyItemFormViewModel
+@inject Microsoft.AspNetCore.Authorization.IAuthorizationService Authorization
 <div class="editor-columns">
     <div>
         <fieldset class="editor-section"><legend><i class="bi bi-journal-text" aria-hidden="true"></i>Study details</legend>
             <div class="mb-4"><div class="field-caption"><label for="Title" class="form-label">Study title</label><output class="character-count" data-count-for="Title"></output></div><input asp-for="Title" class="form-control" maxlength="200" required placeholder="Review chapter 4: network protocols" /><span asp-validation-for="Title" class="field-error"></span></div>
             <div class="mb-4"><div class="field-caption"><label for="Description" class="form-label">Objective &amp; notes <span class="optional-label">Optional</span></label><output class="character-count" data-count-for="Description"></output></div><textarea asp-for="Description" class="form-control" maxlength="1000" rows="5" placeholder="Topics, exercises, reading references, or the result you want to achieve"></textarea><span asp-validation-for="Description" class="field-error"></span></div>
-            <div class="field-caption"><label for="CategoryId" class="form-label">Category</label><a asp-controller="Categories" asp-action="Create" class="field-link"><i class="bi bi-plus-lg" aria-hidden="true"></i>New category</a></div>
+            <div class="field-caption"><label for="CategoryId" class="form-label">Category</label>@if ((await Authorization.AuthorizeAsync(User, null, StudyPlanner.Web.Security.CategoryManagementRequirement.Policy)).Succeeded) { <a asp-controller="Categories" asp-action="Create" class="field-link"><i class="bi bi-plus-lg" aria-hidden="true"></i>New category</a> }</div>
             <select asp-for="CategoryId" class="form-select" required><option value="">Choose a category</option>@foreach (var category in Model.Categories) { <option value="@category.Id">@category.Name</option> }</select><span asp-validation-for="CategoryId" class="field-error"></span>
             @if (!Model.Categories.Any()) { <p class="empty-field">No categories available.</p> }
         </fieldset>

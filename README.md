@@ -91,6 +91,14 @@ Browser scripts in `tests/frontend` require Playwright and installed Chrome and 
 
 The new `tests/frontend/review-planning.test.cjs` defaults to loopback port 5816. It requires `STUDYPLANNER_REVIEW_TEST_DATABASE` named `studyplanner_phase6_browser_*` and `STUDYPLANNER_REVIEW_TEST_SOCKET` pointing to the isolated `/private/tmp/studyplanner-*` PostgreSQL socket (port 55439, role `studyplanner_test`). Start the preview against that same disposable database. It verifies navigation, two review cycles, invalid input, themes/responsiveness and Focus persistence, and writes screenshots/results under `/private/tmp/studyplanner-phase6-browser-evidence` by default. Its synthetic SQL setup must never target a production database.
 
+## Shared Category Permissions
+
+Shared categories are readable/selectable by authenticated users; only explicitly provisioned active Administrators can create, edit or delete them. Registration and existing/demo accounts default to Regular. Management permission is checked against current server-side account state in both Web and Application layers, not stale role claims. Administrators do not gain access to other users' study data.
+
+See [Administrator Operations](ADMINISTRATION.md) for the operator-only UUID-targeted grant/revoke command, confirmation, durable audit, database permissions and migration/rollback order. No public role-management endpoint or default administrator exists. The new API refuses incompatible migration history before serving Production traffic.
+
+The category browser suite `tests/frontend/admin-categories.test.cjs` defaults to loopback port 5819 and requires `STUDYPLANNER_ADMIN_TEST_DATABASE=studyplanner_phase9_browser_<test-id>` plus `STUDYPLANNER_ADMIN_TEST_SOCKET=/private/tmp/studyplanner-<socket-id>`. It uses synthetic registration and explicitly invokes the operator CLI for test-only grant/revoke. The form suite now also requires the corresponding `STUDYPLANNER_FORMS_TEST_DATABASE`/`STUDYPLANNER_FORMS_TEST_SOCKET` for a synthetic administrator fixture; no real accounts may be provisioned by tests. Review/history suites accept their explicitly guarded Phase 9 database names and URL/output environment overrides.
+
 ## Continuous Integration
 
 `.github/workflows/ci.yml` runs on pull requests and pushes to master/main. It performs vulnerability-audited restore, Release build, .NET tests with a real disposable PostgreSQL service, timer tests, Docker build and Compose smoke checks. Test results are retained as artifacts. Actions are pinned to verified commit SHAs; Dependabot checks NuGet, Docker and action updates weekly. The workflow has read-only repository permissions and does not publish images or deploy.

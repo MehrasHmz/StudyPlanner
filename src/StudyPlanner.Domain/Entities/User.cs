@@ -1,4 +1,5 @@
 using StudyPlanner.Domain.Common;
+using StudyPlanner.Domain.Enums;
 
 namespace StudyPlanner.Domain.Entities;
 public class User : AuditableEntity
@@ -7,6 +8,13 @@ public class User : AuditableEntity
     public string Email { get; private set; } = string.Empty;
     public string PasswordHash { get; private set; } = string.Empty;
     public bool IsActive { get; private set; } = true;
+    public UserRole Role { get; private set; } = UserRole.Regular;
+
+    public void SetRole(UserRole role)
+    {
+        if (!Enum.IsDefined(role)) throw new ArgumentOutOfRangeException(nameof(role));
+        Role = role;
+    }
 
     private readonly List<StudyItem> _studyItems = new();
     public IReadOnlyCollection<StudyItem> StudyItems => _studyItems.AsReadOnly();

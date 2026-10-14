@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 using StudyPlanner.Domain.Entities;
+using StudyPlanner.Domain.Enums;
 
 namespace StudyPlanner.Infrastructure.Configurations;
 public class UserConfig : IEntityTypeConfiguration<User>
@@ -12,6 +13,20 @@ public class UserConfig : IEntityTypeConfiguration<User>
         b.Property(x => x.Email).IsRequired().HasMaxLength(300);
         b.HasIndex(x => x.Email).IsUnique();
         b.Property(x => x.PasswordHash).IsRequired().HasMaxLength(500);
+        b.Property(x => x.Role).HasConversion<int>().HasDefaultValue(UserRole.Regular).IsRequired();
+        b.ToTable("Users", table => table.HasCheckConstraint("CK_Users_Role", "\"Role\" IN (0, 1)"));
+    }
+}
+public class RoleChangeAuditConfig : IEntityTypeConfiguration<RoleChangeAudit>
+{
+    public void Configure(EntityTypeBuilder<RoleChangeAudit> b)
+    {
+        b.HasKey(x => x.Id);
+        b.Property(x => x.Operator).HasMaxLength(200).IsRequired();
+        b.Property(x => x.Reason).HasMaxLength(500).IsRequired();
+        b.HasIndex(x => new { x.UserId, x.ChangedAt });
+        b.HasOne<User>().WithMany().HasForeignKey(x => x.UserId).OnDelete(DeleteBehavior.Restrict);
+        b.ToTable("RoleChangeAudits", table => table.HasCheckConstraint("CK_RoleChangeAudits_Roles", "\"PreviousRole\" IN (0, 1) AND \"NewRole\" IN (0, 1)"));
     }
 }
 public class CategoryConfig : IEntityTypeConfiguration<Category>

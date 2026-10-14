@@ -1,6 +1,7 @@
 using FluentAssertions;
 using Microsoft.EntityFrameworkCore;
 using StudyPlanner.Application.Commands.Categories;
+using StudyPlanner.Application.Authorization;
 using StudyPlanner.Domain.Entities;
 using StudyPlanner.Domain.Enums;
 using StudyPlanner.Infrastructure.Repositories;
@@ -43,10 +44,12 @@ public class PostgresCategoryIntegrityTests : IClassFixture<PostgresTestDatabase
         await using var setup = _database.CreateContext();
         var owner = new User("Owner", Guid.NewGuid() + "@example.test", "test-only");
         var category = new Category("Referenced " + Guid.NewGuid());
+        owner.SetRole(UserRole.Administrator);
         var item = new StudyItem("Historical", "", StudyItemType.Programming, DifficultyLevel.Beginner, 20, 3, category.Id, owner.Id); item.SoftDelete();
         setup.Users.Add(owner); setup.Categories.Add(category); setup.StudyItems.Add(item); await setup.SaveChangesAsync();
         await using var context = _database.CreateContext();
-        (await Record.ExceptionAsync(() => new DeleteCategoryHandler(new CategoryRepository(context)).Handle(new(category.Id), default)))
+        var permission = new CategoryPermission(new TestCurrentUser(owner.Id), new UserRepository(context));
+        (await Record.ExceptionAsync(() => new DeleteCategoryHandler(new CategoryRepository(context), permission).Handle(new(category.Id), default)))
             .Should().BeOfType<InvalidOperationException>();
         (await context.Categories.AsNoTracking().SingleAsync(c => c.Id == category.Id)).IsDeleted.Should().BeFalse();
         (await context.SaveChangesAsync()).Should().Be(0);

@@ -7,8 +7,8 @@ const fs = require('node:fs');
 const base = process.env.STUDYPLANNER_REVIEW_TEST_URL || 'http://127.0.0.1:5816';
 const database = process.env.STUDYPLANNER_REVIEW_TEST_DATABASE;
 const socket = process.env.STUDYPLANNER_REVIEW_TEST_SOCKET;
-if (new URL(base).hostname !== '127.0.0.1' || !/^studyplanner_phase[68]_browser_[a-z0-9_]+$/.test(database || '') || !socket?.startsWith('/private/tmp/studyplanner-'))
-    throw new Error('Use an explicitly configured isolated Phase 6/8 browser database and loopback server.');
+if (new URL(base).hostname !== '127.0.0.1' || !/^studyplanner_phase[689]_browser_[a-z0-9_]+$/.test(database || '') || !socket?.startsWith('/private/tmp/studyplanner-'))
+    throw new Error('Use an explicitly configured isolated Phase 6/8/9 browser database and loopback server.');
 const output = process.env.STUDYPLANNER_REVIEW_TEST_OUTPUT || '/private/tmp/studyplanner-phase6-browser-evidence';
 fs.mkdirSync(output, { recursive: true });
 const sql = query => execFileSync('psql', ['-h', socket, '-p', '55439', '-U', 'studyplanner_test', '-d', database, '-v', 'ON_ERROR_STOP=1', '-At', '-c', query], { encoding: 'utf8' }).trim();

@@ -45,7 +45,7 @@ public class AppDbContext : DbContext
             new Category(cat2, "Programming", "Software development"), new Category(cat3, "Algorithms", "Data structures & algorithms"));
         mb.Entity<User>().HasData(new
         {
-            Id = userId, FullName = "Demo User", Email = "demo@studyplanner.com", IsActive = true,
+            Id = userId, FullName = "Demo User", Email = "demo@studyplanner.com", IsActive = true, Role = Domain.Enums.UserRole.Regular,
             PasswordHash = "ijB+qBaQa257yaJeoHCrzR/fBHVJ4IHm+mpkiCk7GY0=",
             CreatedAt = baseline.AddTicks(1670), UpdatedAt = (DateTime?)null
         });

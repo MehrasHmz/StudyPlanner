@@ -1,17 +1,17 @@
 # StudyPlanner Release Readiness
 
-Audit date: 2026-10-13. This is a tested local release candidate, not a production deployment or a production-readiness certification.
+Audit date: 2026-10-14 (Phase 9). This is a tested local release candidate, not a production deployment or a production-readiness certification.
 
 ## Verified Baseline
 
 Phases 1-6 are preserved in the existing history. Phase 7 was recovered, finished, tested and independently pushed as `e1c4c89fa301c03d434de7f07977dd042a87f947`; [its hosted CI passed](https://github.com/MehrasHmz/StudyPlanner/actions/runs/38449105966). Phase 8 adds focused security and integrity fixes without changing ownership models, historical migrations, the planner or Focus timer.
 
 - Release build: zero warnings and errors.
-- Full .NET suite: 276 passed, zero failures, zero skips; includes 29 real PostgreSQL cases.
+- Full .NET suite: 308 passed, zero failures, zero skips; includes 40 real PostgreSQL cases. The Phase 8 baseline of 276/29 was rerun before changes.
 - Timer suite: 19 passed, zero failures and skips.
-- Chrome workflows: 497 checks, 180 screenshots, zero JavaScript errors, light/dark themes at 1440, 1024, 768, 390 and 360 pixels as applicable.
+- Chrome workflows: 759 checks, 260 screenshots, zero JavaScript errors, light/dark themes at 1440, 1024, 768, 390 and 360 pixels as applicable; includes regular/admin category management and operator grant/revoke.
 - NuGet direct/transitive audit: no reported vulnerable packages in five projects at audit time.
-- Docker: build, Production-mode startup, migration exit 0, readiness, login and cookie survival after API recreation passed on an isolated local Compose project.
+- Docker: current Phase 9 build, populated migration exit 0, Production-mode startup, readiness, login, cookie survival after API recreation, one-shot operator grant/revoke and durable audit passed on an isolated local Compose project.
 - Disposable PostgreSQL backup/restore: all seven tables matched row counts and sorted JSON row fingerprints; original database unchanged.
 
 Session recording distinguishes planned time from explicitly entered actual effort. Scores and notes are optional and validated; subset completion and form error preservation work. History/details and private notes are owner-scoped and paginated. Recurring reviews, optimistic completion concurrency, CSRF, password upgrades and Focus independence remain covered. Legacy recorded sessions without progress do not fabricate actual minutes; titles remain current names, not immutable historical snapshots.
@@ -26,9 +26,9 @@ Session recording distinguishes planned time from explicitly entered actual effo
 
 The deletion reference precheck is not a serializable reservation: a concurrent new reference remains possible. Archived-category read compatibility prevents those items disappearing. Required-navigation EF warnings have not been suppressed; other default filtered reads must be evaluated when new query paths are introduced.
 
-## Category Policy: Unresolved Public-Release Blocker
+## Category Policy: Approved And Implemented
 
-Categories currently remain globally shared; authenticated users can still create and rename them and delete unreferenced ones. A reference guard is not authorization. Shared renaming can affect other users.
+Phase 9 explicitly approved Option B. Categories remain global and readable/selectable by authenticated users, but only active persisted Administrators may mutate the catalog. Web policy and all mutation handlers independently check authoritative state. Registration, existing users and demo accounts default to Regular. Unknown roles fail closed. No administrator is created automatically.
 
 | Option | Consequence |
 | --- | --- |
@@ -36,11 +36,11 @@ Categories currently remain globally shared; authenticated users can still creat
 | B: Shared categories, privileged changes | Smallest fit for the current data model; requires explicit management permission and trusted administrator provisioning. Recommended. |
 | C: Protected shared plus private categories | More flexible, but adds permission, naming, selector and migration complexity. |
 
-Product approval and the identity/provisioning of privileged managers are outstanding. No user has silently been made an administrator and no ownership migration was invented. Resolve this P1 issue before exposing registration to untrusted users.
+The application-level policy blocker is resolved. Operator-controlled UUID-targeted CLI provisioning, explicit confirmation, atomic role/audit writes and immediate next-request revocation are implemented and tested. Read [Administrator Operations](ADMINISTRATION.md) before provisioning approved real managers; actual operator identities, credential custody and least-privilege database grants remain deployment decisions. No production account was provisioned.
 
 ## Production Checklist
 
-- Approve the category model and implement/test its exact permissions before public release.
+- Assign legitimate managers through the documented operator command after verifying the deployment/UUID. Separate protected operator credentials from runtime credentials and approve least-privilege database grants; do not provision a known/default manager.
 - Review the known initial demo account (`demo@studyplanner.com`) and legacy sample data. Disable or rotate it through an approved rollout; do not delete migration history or users' records. The audit did not modify a real user database.
 - Terminate TLS at an approved reverse proxy, configure redirects/HSTS there, and restrict access to backend HTTP. Set `Security:RequireSecureCookies=true` (`REQUIRE_SECURE_COOKIES=true` in Compose). Local HTTP defaults remain usable, including local Production-mode smoke tests.
 - Define trusted proxy addresses/networks and forwarded-header handling before using forwarded client IPs. Current limits use connection IP only and ignore spoofed X-Forwarded-For; a proxy/NAT can group clients. Add infrastructure/distributed abuse protection for multiple replicas; tune positive limits through Security settings or Compose variables.
@@ -80,10 +80,12 @@ Verify schema, migration history, counts and data fingerprints before acceptance
 
 The existing GitHub workflow restores with vulnerability warnings treated as errors, builds Release, executes .NET/real PostgreSQL/timer tests and builds/starts disposable Docker services. It has no production deployment/publishing step. Browser and API-recreation smoke suites were run locally; they are not currently part of hosted CI.
 
-Local evidence: `/private/tmp/studyplanner-phase8-tests/phase8-final.trx`, browser results under `/private/tmp/studyplanner-phase8-browser-evidence`, `/private/tmp/studyplanner-phase8-review-evidence` and `/private/tmp/studyplanner-phase8-forms-evidence`. These ephemeral synthetic artifacts and the disposable dump were not committed. The final external Phase 8 receipt records the pushed SHA and hosted CI result; this file intentionally does not claim future CI success.
+Current local evidence: `/private/tmp/studyplanner-phase9-tests/phase9-final.trx`, browser results under `/private/tmp/studyplanner-phase9-browser-evidence`, `/private/tmp/studyplanner-phase9-release-evidence`, `/private/tmp/studyplanner-phase9-review-evidence` and `/private/tmp/studyplanner-phase9-forms-evidence`. Synthetic artifacts/dumps were not committed. The final external Phase 9 receipt records the pushed SHA and hosted CI result; this file intentionally does not claim future CI success. Phase 8 backup/restore evidence remains historical and was not represented as a newly repeated full restore audit.
+
+Phase 9 adds migration `20261014075951_AddUserRolesAndRoleAudit`: safe Role default 0, checks, audit table/index. Populated legacy migration and credential/reference preservation passed on disposable PostgreSQL. Generated Up SQL contains no data updates/deletes/drops. Non-development/non-test startup refuses incompatible migration history before binding HTTP; a process-level test against a restored legacy schema verified refusal. One-shot migration precedes API startup in Compose. Do not serve the old build after the category authorization cutover or automatically run Down (it would remove role/audit data); see the explicit rollout/rollback guidance in ADMINISTRATION.md.
 
 Security implementation follows [ASP.NET Core rate limiting](https://learn.microsoft.com/en-us/aspnet/core/performance/rate-limit?view=aspnetcore-8.0) and [cookie principal validation](https://learn.microsoft.com/en-us/aspnet/core/security/authentication/cookie?view=aspnetcore-8.0). [Trusted forwarding guidance](https://learn.microsoft.com/en-us/dotnet/core/compatibility/aspnet-core/8.0/forwarded-headers-unknown-proxies) informs the deployment checklist; forwarded-header middleware was not enabled blindly.
 
 ## Status
 
-Phase 8 scoped stabilization and audit are verified locally, subject to the exact Git/hosted CI receipt. Public release remains blocked by category management policy and environment-specific security/operational acceptance. No production deployment occurred. No Phase 9 was started.
+Phase 9 category governance is verified locally, subject to the final Git/hosted CI receipt. The approved category policy is implemented; public release still requires environment-specific security/operational acceptance and legitimate operator/manager provisioning. No production deployment occurred. No Phase 10 was started.

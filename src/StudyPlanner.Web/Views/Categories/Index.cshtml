@@ -1,7 +1,8 @@
 @model PaginatedResult<CategoryDto>
-@{ ViewData["Title"] = "Categories"; }
+@inject Microsoft.AspNetCore.Authorization.IAuthorizationService Authorization
+@{ ViewData["Title"] = "Categories"; var canManage = (await Authorization.AuthorizeAsync(User, null, StudyPlanner.Web.Security.CategoryManagementRequirement.Policy)).Succeeded; }
 <div class="container py-4">
-    <header class="page-heading"><div><div class="eyebrow">Shared study library</div><h1>Categories</h1><p>@Model.Total categories</p></div><a asp-action="Create" class="btn btn-primary"><i class="bi bi-plus-lg" aria-hidden="true"></i>Add Category</a></header>
+    <header class="page-heading"><div><div class="eyebrow">Shared study library</div><h1>Categories</h1><p>@Model.Total categories</p></div>@if (canManage) { <a asp-action="Create" class="btn btn-primary"><i class="bi bi-plus-lg" aria-hidden="true"></i>Add Category</a> }</header>
     @if (Model.Items.Any())
     {
         <div class="category-grid">
@@ -10,7 +11,7 @@
                 <article class="card category-card">
                     <div class="category-heading"><span class="category-symbol" aria-hidden="true"><i class="bi bi-folder2"></i></span><h2>@category.Name</h2></div>
                     <p class="category-description">@(string.IsNullOrWhiteSpace(category.Description) ? "No topics added yet." : category.Description)</p>
-                    <div class="category-actions"><a asp-controller="StudyItems" asp-action="Create" asp-route-categoryId="@category.Id" class="btn btn-outline-primary"><i class="bi bi-plus-lg" aria-hidden="true"></i>Study item</a><div class="category-icon-actions"><a asp-action="Edit" asp-route-id="@category.Id" class="item-action" data-tooltip="Edit" title="Edit @category.Name" aria-label="Edit @category.Name"><i class="bi bi-pencil" aria-hidden="true"></i></a><form asp-action="Delete" method="post" data-confirm="Delete this shared category? Existing study items will not be deleted."><input name="id" type="hidden" value="@category.Id" /><button class="item-action item-action-danger" type="submit" data-tooltip="Delete" title="Delete @category.Name" aria-label="Delete @category.Name"><i class="bi bi-trash" aria-hidden="true"></i></button></form></div></div>
+                    <div class="category-actions"><a asp-controller="StudyItems" asp-action="Create" asp-route-categoryId="@category.Id" class="btn btn-outline-primary"><i class="bi bi-plus-lg" aria-hidden="true"></i>Study item</a>@if (canManage) { <div class="category-icon-actions"><a asp-action="Edit" asp-route-id="@category.Id" class="item-action" data-tooltip="Edit" title="Edit @category.Name" aria-label="Edit @category.Name"><i class="bi bi-pencil" aria-hidden="true"></i></a><form asp-action="Delete" method="post" data-confirm="Delete this shared category? Existing study items will not be deleted."><input name="id" type="hidden" value="@category.Id" /><button class="item-action item-action-danger" type="submit" data-tooltip="Delete" title="Delete @category.Name" aria-label="Delete @category.Name"><i class="bi bi-trash" aria-hidden="true"></i></button></form></div> }</div>
                 </article>
             }
         </div>
@@ -19,5 +20,5 @@
             <nav class="category-pagination" aria-label="Category pages"><span class="text-muted">Page @Model.Page of @Model.TotalPages</span><div class="page-actions">@if (Model.HasPrevious) { <a class="icon-button" asp-action="Index" asp-route-page="@(Model.Page - 1)" title="Previous page" aria-label="Previous page"><i class="bi bi-arrow-left" aria-hidden="true"></i></a> } @if (Model.HasNext) { <a class="icon-button" asp-action="Index" asp-route-page="@(Model.Page + 1)" title="Next page" aria-label="Next page"><i class="bi bi-arrow-right" aria-hidden="true"></i></a> }</div></nav>
         }
     }
-    else { <div class="empty-state"><i class="bi bi-folder2-open d-block" aria-hidden="true"></i><h2>No categories yet</h2><a asp-action="Create" class="btn btn-primary mt-3"><i class="bi bi-plus-lg" aria-hidden="true"></i>Create category</a></div> }
+    else { <div class="empty-state"><i class="bi bi-folder2-open d-block" aria-hidden="true"></i><h2>No categories yet</h2>@if (canManage) { <a asp-action="Create" class="btn btn-primary mt-3"><i class="bi bi-plus-lg" aria-hidden="true"></i>Create category</a> } else { <p>The shared catalog has no active categories.</p> }</div> }
 </div>
