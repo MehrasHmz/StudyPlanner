@@ -57,6 +57,10 @@ jobs:
       - name: Docker build and startup verification
         run: |
           docker compose config --quiet
+          docker compose build
+          docker compose up --build -d --wait --wait-timeout 180 postgres
+          docker compose run --rm --no-deps migrate
+          docker compose run --rm --no-deps api --disable-demo-account --user-id 00000000-0000-0000-0000-000000000001 --operator ci-disposable-operator --reason disposable-release-verification --confirm
           docker compose up --build -d --wait --wait-timeout 180
           curl --fail --silent --output /dev/null http://127.0.0.1:8080/health/ready
           curl --fail --silent --output /dev/null http://127.0.0.1:8080/Auth/Login

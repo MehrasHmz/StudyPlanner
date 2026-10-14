@@ -9,6 +9,7 @@ public class User : AuditableEntity
     public string PasswordHash { get; private set; } = string.Empty;
     public bool IsActive { get; private set; } = true;
     public UserRole Role { get; private set; } = UserRole.Regular;
+    public void Deactivate() => IsActive = false;
 
     public void SetRole(UserRole role)
     {

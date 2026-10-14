@@ -1,0 +1,24 @@
+# Reviewed overlay: docker compose -f docker-compose.yml -f deployment/compose.production.example.yml ...
+# TLS remains an external approved reverse proxy; do not publish backend HTTP publicly.
+services:
+  api:
+    environment:
+      ASPNETCORE_ENVIRONMENT: Production
+      Security__RequireSecureCookies: "true"
+      AllowedHosts: ${ALLOWED_HOSTS:?Set approved host names}
+      ASPNETCORE_FORWARDEDHEADERS_ENABLED: "false"
+      DOTNET_FORWARDEDHEADERS_ENABLED: "false"
+    secrets:
+      - source: runtime_connection
+        target: ConnectionStrings__DefaultConnection
+  migrate:
+    environment:
+      ASPNETCORE_ENVIRONMENT: Production
+    secrets:
+      - source: migration_connection
+        target: ConnectionStrings__DefaultConnection
+secrets:
+  runtime_connection:
+    file: ${RUNTIME_CONNECTION_SECRET_FILE:?Set protected runtime connection file}
+  migration_connection:
+    file: ${MIGRATION_CONNECTION_SECRET_FILE:?Set protected migration connection file}

@@ -18,4 +18,5 @@ node_modules/
 *.pfx
 *.p12
 .secrets/
+deployment/*.env
 keys/

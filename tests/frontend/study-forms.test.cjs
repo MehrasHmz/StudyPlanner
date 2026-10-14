@@ -37,7 +37,7 @@ let browser;
     await page.getByRole('button', { name: 'Sign in', exact: true }).click(); await page.waitForURL(base + '/');
     // Category form tests now require an explicitly provisioned synthetic administrator.
     const database = process.env.STUDYPLANNER_FORMS_TEST_DATABASE, socket = process.env.STUDYPLANNER_FORMS_TEST_SOCKET;
-    if (!/^studyplanner_phase9_browser_[a-z0-9_]+$/.test(database || '') || !socket?.startsWith('/private/tmp/studyplanner-'))
+    if (!/^studyplanner_phase(?:9|10)_browser_[a-z0-9_]+$/.test(database || '') || !socket?.startsWith('/private/tmp/studyplanner-'))
         throw new Error('Configure an isolated Phase 9 database/socket for operator-controlled form-test provisioning.');
     const id = execFileSync('/opt/homebrew/bin/psql', ['-h', socket, '-p', '55439', '-U', 'studyplanner_test', '-d', database, '-At', '-c', `SELECT "Id" FROM "Users" WHERE "Email"='${email}'`], { encoding: 'utf8' }).trim();
     assert.match(id, /^[a-f0-9-]{36}$/);

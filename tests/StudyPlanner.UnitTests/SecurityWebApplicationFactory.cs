@@ -13,6 +13,7 @@ using StudyPlanner.Domain.Enums;
 using StudyPlanner.Domain.Interfaces;
 using StudyPlanner.Domain.ReadModels;
 using StudyPlanner.Infrastructure.Data;
+using StudyPlanner.Infrastructure.Administration;
 
 namespace StudyPlanner.UnitTests;
 
@@ -36,6 +37,10 @@ public sealed class SecurityWebApplicationFactory : WebApplicationFactory<Progra
             var schema = new Mock<IDatabaseSchemaCheck>();
             schema.Setup(s => s.VerifyAsync(It.IsAny<CancellationToken>())).Returns(Task.CompletedTask);
             services.AddSingleton(schema.Object);
+            services.RemoveAll<IReleaseAccountCheck>();
+            var release = new Mock<IReleaseAccountCheck>();
+            release.Setup(s => s.VerifyAsync(It.IsAny<CancellationToken>())).Returns(Task.CompletedTask);
+            services.AddSingleton(release.Object);
             services.RemoveAll<TimeProvider>();
             services.AddSingleton(Clock);
             services.RemoveAll<ILoggerFactory>();

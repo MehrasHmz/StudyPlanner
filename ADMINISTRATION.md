@@ -51,6 +51,8 @@ docker compose -p '<approved-project>' run --rm --no-deps \
 
 The one-shot container does not publish ports. Do not accidentally point test commands at an existing production deployment. Production provisioning is not authorized by local test approval.
 
+Phase 10 file-secret support: if the production overlay mounts `/run/secrets`, those values override environment placeholders. Run provisioning with a separately protected operator-secret directory (`Secrets__Directory`), rather than assuming an environment connection overrides the runtime secret. See DEPLOYMENT_CHECKLIST.md. Production also requires the explicit historical demo-account procedure before serving; no manager may be granted to an inactive account.
+
 ## Atomicity, Audit And Permissions
 
 Grant/revoke lock the exact user row (`FOR UPDATE`), recheck account state, update Role and insert a `RoleChangeAudits` record in one transaction. Audit stores target UUID, previous/new roles, operator label, bounded reason and UTC time. Concurrent identical grants serialize; repeated identical operations return no change and do not create duplicate audit records. Invalid/missing/empty/duplicate targets, unknown roles, missing confirmation, inactive grants or invalid audit metadata are refused. Errors do not print internal database/credential details; a connection failure at commit should be reconciled by re-inspecting authoritative state before retrying.

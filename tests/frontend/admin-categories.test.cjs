@@ -1,11 +1,11 @@
-const { chromium } = require('playwright');
+const { chromium, webkit } = require('playwright');
 const { execFileSync, spawnSync } = require('node:child_process');
 const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const base = process.env.STUDYPLANNER_ADMIN_TEST_URL || 'http://127.0.0.1:5819';
 const database = process.env.STUDYPLANNER_ADMIN_TEST_DATABASE;
 const socket = process.env.STUDYPLANNER_ADMIN_TEST_SOCKET;
-if (new URL(base).hostname !== '127.0.0.1' || !/^studyplanner_phase9_browser_[a-z0-9_]+$/.test(database || '') || !socket?.startsWith('/private/tmp/studyplanner-'))
+if (new URL(base).hostname !== '127.0.0.1' || !/^studyplanner_phase(?:9|10)_browser_[a-z0-9_]+$/.test(database || '') || !socket?.startsWith('/private/tmp/studyplanner-'))
     throw new Error('Use an explicitly configured isolated Phase 9 database and loopback preview.');
 const dotnet = process.env.STUDYPLANNER_TEST_DOTNET || '/Users/m/.dotnet/dotnet';
 const web = require('node:path').resolve('src/StudyPlanner.Web');
@@ -24,7 +24,7 @@ function provision(id, role, confirmed = true) {
 }
 let browser;
 (async () => {
-    browser = await chromium.launch({ channel: 'chrome', headless: true, args: ['--disable-gpu'] });
+    browser = process.env.STUDYPLANNER_BROWSER_ENGINE === 'webkit' ? await webkit.launch() : await chromium.launch({ channel: 'chrome', headless: true, args: ['--disable-gpu'] });
     const regular = await browser.newPage(), admin = await browser.newPage();
     const checks = [], errors = []; let screenshots = 0;
     for (const page of [regular, admin]) { page.on('pageerror', e => errors.push(e.message)); page.on('dialog', dialog => dialog.accept()); }

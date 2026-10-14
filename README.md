@@ -10,6 +10,12 @@ Docker Desktop (Linux containers) and Docker Compose v2 are required. ARM64 macO
 cp .env.example .env
 # Replace POSTGRES_PASSWORD in .env with a unique local password.
 docker compose config --quiet
+docker compose build
+docker compose up -d --wait postgres
+docker compose run --rm --no-deps migrate
+# Inspect the historical account in this explicitly selected database (no mutation).
+docker compose run --rm --no-deps api --disable-demo-account --user-id 00000000-0000-0000-0000-000000000001 --operator '<your-operator-label>' --reason '<approved-ticket>'
+# Only after verifying environment/account, repeat that command with --confirm.
 docker compose up --build -d --wait
 ```
 
@@ -37,7 +43,9 @@ Real credentials are not checked into appsettings. Configure `ConnectionStrings_
 
 Data Protection keys are mounted at `/app/keys`; retaining this volume preserves authentication and antiforgery cryptographic keys across container replacement. The local volume is not encrypted by the application. Protect it and database backups at the host level.
 
-The existing initial migration includes a **demo account** (`demo@studyplanner.com` / `password123`) and sample records. Never expose a newly migrated database publicly until demo credentials and sample data have been handled through an approved procedure. This setup is a verified local container workflow, not a declaration that internet-facing production deployment is fully hardened. Production also requires HTTPS/reverse-proxy configuration, trusted forwarding, backup/restore policy, runtime patching and secret/key protection.
+The historical initial migration includes a demo account with known legacy credentials and sample records. Credentials are intentionally not reproduced here. Production startup now refuses an active historical seed UUID; use the explicit inspection/confirmation procedure in [Operations](OPERATIONS.md). It deactivates the exact account and preserves hashes/study data; nothing is removed from an unknown database automatically. Fresh installations and upgrades both require this review. Development behavior is unchanged and must not be exposed publicly.
+
+The established KeyPerFile provider reads optional secrets from `/run/secrets` (or an operator-selected `Secrets__Directory`), with filenames such as `ConnectionStrings__DefaultConnection`; file values override earlier environment placeholders. [Production templates](deployment/compose.production.example.yml) separate runtime/migration secrets and require approved hosts/Secure cookies, but do not implement or verify TLS, encrypted key storage or a secret manager. See [Deployment Checklist](DEPLOYMENT_CHECKLIST.md) and [Release Readiness](RELEASE_READINESS.md) before release.
 
 ## Local Development
 

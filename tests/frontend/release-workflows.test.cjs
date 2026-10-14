@@ -1,4 +1,4 @@
-const { chromium } = require('playwright');
+const { chromium, webkit } = require('playwright');
 const { execFileSync } = require('node:child_process');
 const { randomUUID } = require('node:crypto');
 const assert = require('node:assert/strict');
@@ -7,14 +7,14 @@ const fs = require('node:fs');
 const base = process.env.STUDYPLANNER_RELEASE_TEST_URL || 'http://127.0.0.1:5818';
 const database = process.env.STUDYPLANNER_RELEASE_TEST_DATABASE;
 const socket = process.env.STUDYPLANNER_RELEASE_TEST_SOCKET;
-if (new URL(base).hostname !== '127.0.0.1' || !/^studyplanner_phase[89]_browser_[a-z0-9_]+$/.test(database || '') || !socket?.startsWith('/private/tmp/studyplanner-'))
+if (new URL(base).hostname !== '127.0.0.1' || !/^studyplanner_phase(?:8|9|10)_browser_[a-z0-9_]+$/.test(database || '') || !socket?.startsWith('/private/tmp/studyplanner-'))
     throw new Error('Configure an isolated Phase 8/9 browser database and loopback server.');
 const output = process.env.STUDYPLANNER_RELEASE_TEST_OUTPUT || '/private/tmp/studyplanner-phase8-browser-evidence';
 fs.mkdirSync(output, { recursive: true });
 const sql = query => execFileSync('psql', ['-h', socket, '-p', '55439', '-U', 'studyplanner_test', '-d', database, '-v', 'ON_ERROR_STOP=1', '-At', '-c', query], { encoding: 'utf8' }).trim();
 let browser;
 (async () => {
-    browser = await chromium.launch({ channel: 'chrome', headless: true, args: ['--disable-gpu'] });
+    browser = process.env.STUDYPLANNER_BROWSER_ENGINE === 'webkit' ? await webkit.launch() : await chromium.launch({ channel: 'chrome', headless: true, args: ['--disable-gpu'] });
     const page = await browser.newPage(); const checks = [], errors = []; let screenshots = 0;
     page.on('pageerror', error => errors.push(error.message));
     const check = (value, name) => { assert.ok(value, name); checks.push(name); };

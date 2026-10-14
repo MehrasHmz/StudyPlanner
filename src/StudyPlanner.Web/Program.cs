@@ -11,8 +11,11 @@ using System.Threading.RateLimiting;
 using StudyPlanner.Web.Security;
 using StudyPlanner.Application.Authorization;
 using Microsoft.AspNetCore.Authorization;
+using StudyPlanner.Infrastructure.Administration;
 
-var builder = WebApplication.CreateBuilder(args.Contains("--manage-user-role", StringComparer.Ordinal) ? Array.Empty<string>() : args);
+var operatorMode = args.Contains("--manage-user-role", StringComparer.Ordinal) || args.Contains("--disable-demo-account", StringComparer.Ordinal);
+var builder = WebApplication.CreateBuilder(operatorMode ? Array.Empty<string>() : args);
+builder.Configuration.AddKeyPerFile(builder.Configuration["Secrets:Directory"] ?? "/run/secrets", optional: true);
 Log.Logger = new LoggerConfiguration().ReadFrom.Configuration(builder.Configuration).Enrich.FromLogContext().WriteTo.Console().WriteTo.File("logs/studyplanner-.log", rollingInterval: RollingInterval.Day).CreateLogger();
 builder.Host.UseSerilog();
 
@@ -68,6 +71,11 @@ builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationSc
     });
 
 var app = builder.Build();
+if (args.Contains("--disable-demo-account", StringComparer.Ordinal))
+{
+    Environment.ExitCode = await DemoAccountReleaseCommand.RunAsync(args, app.Services, Console.Out);
+    return;
+}
 if (args.Contains("--manage-user-role", StringComparer.Ordinal))
 {
     Environment.ExitCode = await RoleProvisioningCommand.RunAsync(args, app.Services, Console.Out);
@@ -90,7 +98,10 @@ if (app.Environment.IsDevelopment())
 else if (!app.Environment.IsEnvironment("Testing"))
 {
     using (var scope = app.Services.CreateScope())
+    {
         await scope.ServiceProvider.GetRequiredService<IDatabaseSchemaCheck>().VerifyAsync();
+        await scope.ServiceProvider.GetRequiredService<IReleaseAccountCheck>().VerifyAsync();
+    }
     app.UseExceptionHandler(error => error.Run(async context =>
     {
         context.Response.StatusCode = 500;
