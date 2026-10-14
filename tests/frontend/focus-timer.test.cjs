@@ -44,9 +44,51 @@ test('countdown completes while the page is inactive', () => {
     assert.equal(restored.status, 'completed'); assert.equal(restored.startedAt, null);
     assert.equal(timer.milliseconds(restored, 121000), 0);
 });
-test('mode switching resets stale timestamps and accumulated time', () => {
-    const state = timer.setMode(timer.sync(timer.start(timer.create(), 1000), 21000), 'stopwatch');
-    assert.equal(state.status, 'ready'); assert.equal(state.startedAt, null); assert.equal(state.elapsedMs, 0);
+test('mode switching preserves running time and keeps counting in both directions', () => {
+    let state = timer.setMode(timer.start(timer.create(), 1000), 'stopwatch', 21000);
+    assert.equal(state.status, 'running'); assert.equal(state.startedAt, 21000); assert.equal(state.elapsedMs, 20000);
+    assert.equal(timer.milliseconds(state, 31000), 30000);
+    state = timer.setMode(state, 'countdown', 41000);
+    assert.equal(state.status, 'running'); assert.equal(state.elapsedMs, 40000);
+    assert.equal(timer.milliseconds(state, 51000), 25 * 60000 - 50000);
+});
+test('switching paused modes preserves time without including paused wall time', () => {
+    let state = timer.pause(timer.start(timer.create({ mode: 'stopwatch', task: 'Networks' }), 1000), 21000);
+    state = timer.setMode(state, 'countdown', 121000);
+    assert.equal(state.status, 'paused'); assert.equal(state.startedAt, null); assert.equal(state.elapsedMs, 20000);
+    assert.equal(state.task, 'Networks');
+    state = timer.setMode(state, 'stopwatch', 221000);
+    assert.equal(timer.milliseconds(state, 321000), 20000);
+});
+test('a switched running timer survives serialization and refresh', () => {
+    const state = timer.setMode(timer.start(timer.create(), 1000), 'stopwatch', 21000);
+    const restored = timer.restore(JSON.stringify(state), 41000);
+    assert.equal(restored.mode, 'stopwatch'); assert.equal(restored.status, 'running'); assert.equal(restored.elapsedMs, 40000);
+});
+test('switching a finished countdown to stopwatch requires explicit resume', () => {
+    const state = timer.setMode(timer.start(timer.create({ minutes: 1 }), 1000), 'stopwatch', 71000);
+    assert.equal(state.status, 'paused'); assert.equal(state.startedAt, null); assert.equal(state.elapsedMs, 60000);
+    assert.equal(timer.milliseconds(timer.start(state, 81000), 91000), 70000);
+});
+test('switching an over-target stopwatch to countdown preserves elapsed time through refresh and back', () => {
+    let state = timer.setMode(timer.start(timer.create({ mode: 'stopwatch', minutes: 1 }), 1000), 'countdown', 91000);
+    assert.equal(state.status, 'completed'); assert.equal(state.startedAt, null); assert.equal(state.elapsedMs, 90000);
+    assert.equal(timer.milliseconds(state, 101000), 0);
+    state = timer.restore(JSON.stringify(state), 111000);
+    assert.equal(state.elapsedMs, 90000);
+    state = timer.setMode(state, 'stopwatch', 121000);
+    assert.equal(state.status, 'paused'); assert.equal(timer.milliseconds(state, 131000), 90000);
+});
+test('same-mode changes and repeated round trips never restart the timer', () => {
+    let state = timer.start(timer.create(), 1000);
+    for (let i = 1; i <= 10; i++) state = timer.setMode(state, i % 2 ? 'stopwatch' : 'countdown', 1000 + i * 1000);
+    state = timer.setMode(state, 'countdown', 12000);
+    assert.equal(state.status, 'running'); assert.equal(state.elapsedMs, 11000);
+});
+test('invalid modes are rejected without mutating the current session', () => {
+    const state = timer.start(timer.create(), 1000);
+    assert.throws(() => timer.setMode(state, 'invalid', 21000), RangeError);
+    assert.equal(state.elapsedMs, 0); assert.equal(state.startedAt, 1000);
 });
 test('countdown never displays negative remaining time', () => {
     const state = timer.start(timer.create({ minutes: 1 }), 1000);

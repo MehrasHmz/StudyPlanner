@@ -51,7 +51,16 @@ The established KeyPerFile provider reads optional secrets from `/run/secrets` (
 
 Install a stable .NET 8 SDK. global.json permits compatible .NET 8 feature-band roll-forward; it does not opt into prerelease or .NET 9/10 SDKs.
 
-Start an isolated PostgreSQL server, configure the connection, then run:
+For Rider or command-line development, start Docker Desktop and run this once from the repository root:
+
+```sh
+bash scripts/setup-local.sh
+dotnet run --project src/StudyPlanner.Web --launch-profile http
+```
+
+In Rider, select the `StudyPlanner.Web` **http** launch profile and Run. The application is available at `http://localhost:5274`. The script starts only a dedicated local PostgreSQL container on `127.0.0.1:55432`, preserves its named data volume, and stores the connection in .NET User Secrets outside Git. Its generated password is kept in ignored `.env.local`; do not delete or replace this file while retaining the database volume. Run the script again after restarting Docker if needed. It does not change the production Compose stack or existing databases. Stop this local database without deleting data with `docker compose --env-file .env.local -f deployment/compose.local.yml stop`.
+
+Alternatively, use your own PostgreSQL server. Store its connection in Rider's **Manage User Secrets** for `StudyPlanner.Web` (key `ConnectionStrings:DefaultConnection`), or configure the environment in your launch profile. An exported shell variable only applies to processes started from that shell, not an already-running Rider instance:
 
 ```sh
 export ConnectionStrings__DefaultConnection='Host=localhost;Port=5432;Database=StudyPlannerDev;Username=your_user;Password=your_local_password'

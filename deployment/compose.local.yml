@@ -1,0 +1,22 @@
+name: studyplanner-local
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: studyplanner_local
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Run bash scripts/setup-local.sh first}
+      POSTGRES_DB: StudyPlannerDev
+    ports:
+      - "127.0.0.1:55432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U studyplanner_local -d StudyPlannerDev"]
+      interval: 2s
+      timeout: 3s
+      retries: 30
+
+volumes:
+  postgres_data:

@@ -51,7 +51,7 @@
         if (state.elapsedMs > 0 || state.status === 'running') { if (!window.confirm('Reset this focus timer?')) return; }
         transition(core.reset(state));
     });
-    document.querySelectorAll('[name="timerMode"]').forEach(input => listen(input, 'change', () => transition(core.setMode(state, input.value))));
+    document.querySelectorAll('[name="timerMode"]').forEach(input => listen(input, 'change', () => transition(core.setMode(state, input.value, Date.now()))));
     document.querySelectorAll('[data-duration]').forEach(button => listen(button, 'click', () => transition(core.setDuration(state, Number(button.dataset.duration)))));
     listen(element('customMinutes'), 'change', () => {
         try { transition(core.setDuration(state, Number(element('customMinutes').value))); notice(''); }

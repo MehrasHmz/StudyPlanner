@@ -15,26 +15,31 @@
     <a class="skip-link" href="#main-content">Skip to content</a>
     @if (!focus)
     {
-        <nav class="navbar navbar-expand-lg" aria-label="Main navigation" id="mainNav"><div class="container">
+        <nav class="navbar navbar-expand-xl" aria-label="Main navigation" id="mainNav"><div class="container">
             <a class="navbar-brand" asp-controller="Home" asp-action="Index"><img class="brand-logo" src="~/logo.png" alt="" width="34" height="34" />StudyPlanner</a>
             <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#nav" aria-controls="nav" aria-expanded="false" aria-label="Toggle navigation"><i class="bi bi-list" aria-hidden="true"></i></button>
             <div class="collapse navbar-collapse" id="nav">
                 @if (authenticated)
                 {
-                    <ul class="navbar-nav me-auto">
+                    <ul class="navbar-nav workspace-nav me-auto">
                         @foreach (var link in new[] { ("Home", "Dashboard", "grid-1x2"), ("StudyItems", "Study items", "journal-text"), ("Categories", "Categories", "tags"), ("Sessions", "Sessions", "calendar-check"), ("Focus", "Focus", "bullseye") })
-                        { <li class="nav-item"><a class="nav-link" asp-controller="@link.Item1" asp-action="Index" aria-current="@(controller == link.Item1 ? "page" : null)"><i class="bi bi-@link.Item3 me-1" aria-hidden="true"></i>@link.Item2</a></li> }
+                        { <li class="nav-item"><a class="nav-link" asp-controller="@link.Item1" asp-action="Index" aria-current="@(controller == link.Item1 ? "page" : null)"><i class="bi bi-@link.Item3" aria-hidden="true"></i><span>@link.Item2</span></a></li> }
                     </ul>
                 }
-                <ul class="navbar-nav ms-auto align-items-lg-center">
+                <ul class="navbar-nav nav-account-controls ms-auto align-items-lg-center">
                     <li class="nav-item"><button class="theme-toggle-btn" type="button" id="themeToggle" aria-label="Switch theme" title="Switch theme"><i class="bi bi-sun" id="themeIcon" aria-hidden="true"></i></button></li>
                     @if (authenticated)
                     {
-                        <li class="nav-item dropdown"><button type="button" class="nav-link dropdown-toggle border-0 bg-transparent nav-user" data-bs-toggle="dropdown" aria-expanded="false"><i class="bi bi-person-circle me-1" aria-hidden="true"></i>@User.Identity!.Name</button><ul class="dropdown-menu dropdown-menu-end"><li><form asp-controller="Auth" asp-action="Logout" method="post" data-logout><button class="dropdown-item" type="submit"><i class="bi bi-box-arrow-right me-2" aria-hidden="true"></i>Sign out</button></form></li></ul></li>
+                        <li class="nav-item dropdown"><button type="button" class="nav-link dropdown-toggle nav-user" data-bs-toggle="dropdown" aria-expanded="false"><i class="bi bi-person-circle" aria-hidden="true"></i><span class="nav-user-name">@User.Identity!.Name</span></button><ul class="dropdown-menu dropdown-menu-end"><li><form asp-controller="Auth" asp-action="Logout" method="post" data-logout><button class="dropdown-item" type="submit"><i class="bi bi-box-arrow-right me-2" aria-hidden="true"></i>Sign out</button></form></li></ul></li>
                     }
                     else
                     {
-                        <li class="nav-item"><a class="nav-link" asp-controller="Auth" asp-action="Login">Sign in</a></li><li class="nav-item"><a class="btn btn-primary ms-lg-2" asp-controller="Auth" asp-action="Register">Create account</a></li>
+                        <li class="nav-item nav-auth-item">
+                            <div class="nav-auth-actions">
+                                <a class="btn btn-outline-secondary" asp-controller="Auth" asp-action="Login">Sign in</a>
+                                <a class="btn btn-primary" asp-controller="Auth" asp-action="Register">Create account</a>
+                            </div>
+                        </li>
                     }
                 </ul>
             </div>

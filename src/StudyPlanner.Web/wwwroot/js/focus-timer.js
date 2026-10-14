@@ -34,9 +34,16 @@
         return next.status === 'running' ? { ...next, status: 'paused', startedAt: null } : next;
     }
     function reset(state) { return { ...state, elapsedMs: 0, startedAt: null, status: 'ready' }; }
-    function setMode(state, mode) {
+    function setMode(state, mode, now = Date.now()) {
         if (!['countdown', 'stopwatch'].includes(mode)) throw new RangeError('Invalid timer mode.');
-        return reset({ ...state, mode });
+        const next = { ...sync(state, now), mode };
+        if (mode === 'countdown' && next.elapsedMs >= next.durationMs) {
+            next.status = 'completed'; next.startedAt = null;
+        } else if (mode === 'stopwatch' && next.status === 'completed') {
+            // Switching views must not silently resume a finished session.
+            next.status = 'paused'; next.startedAt = null;
+        }
+        return next;
     }
     function setDuration(state, minutes) {
         if (!validDuration(minutes)) throw new RangeError('Choose 1 to 480 whole minutes.');
@@ -54,8 +61,7 @@
             const state = { ...create(), mode: value.mode, task: cleanTask(value.task), durationMs: value.durationMs,
                 elapsedMs: value.elapsedMs, status: value.status, startedAt: value.status === 'running' ? value.startedAt : null,
                 showClock: value.showClock !== false, entryItemId: typeof value.entryItemId === 'string' ? value.entryItemId.slice(0, 36) : null };
-            if (state.mode === 'countdown') state.elapsedMs = Math.min(state.elapsedMs, state.durationMs);
-            if (state.status === 'completed') state.elapsedMs = state.durationMs;
+            if (state.status === 'completed') state.elapsedMs = Math.max(state.elapsedMs, state.durationMs);
             return sync(state, now);
         } catch { return create(); }
     }
