@@ -40,10 +40,18 @@ namespace StudyPlanner.Infrastructure.Migrations
                         .HasMaxLength(100)
                         .HasColumnType("character varying(100)");
 
+                    b.Property<Guid?>("UserId")
+                        .HasColumnType("uuid");
+
                     b.HasKey("Id");
 
                     b.HasIndex("Name")
-                        .IsUnique();
+                        .IsUnique()
+                        .HasFilter("\"UserId\" IS NULL AND NOT \"IsDeleted\"");
+
+                    b.HasIndex("UserId", "Name")
+                        .IsUnique()
+                        .HasFilter("\"UserId\" IS NOT NULL AND NOT \"IsDeleted\"");
 
                     b.ToTable("Categories");
 
@@ -397,6 +405,14 @@ namespace StudyPlanner.Infrastructure.Migrations
                             PasswordHash = "ijB+qBaQa257yaJeoHCrzR/fBHVJ4IHm+mpkiCk7GY0=",
                             Role = 0
                         });
+                });
+
+            modelBuilder.Entity("StudyPlanner.Domain.Entities.Category", b =>
+                {
+                    b.HasOne("StudyPlanner.Domain.Entities.User", null)
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Restrict);
                 });
 
             modelBuilder.Entity("StudyPlanner.Domain.Entities.ProgressRecord", b =>

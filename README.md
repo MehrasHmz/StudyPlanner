@@ -1,6 +1,6 @@
 # StudyPlanner
 
-ASP.NET Core 8 Razor MVC study planner with PostgreSQL, EF Core, MediatR and FluentValidation. The application includes authenticated study-item management, shared categories, session planning and completion, and a browser-local Focus timer. Onion Architecture is preserved.
+ASP.NET Core 8 Razor MVC study planner with PostgreSQL, EF Core, MediatR and FluentValidation. The application includes authenticated study-item management, personal and shared categories, session planning and completion, and a browser-local Focus timer. Onion Architecture is preserved.
 
 ## Docker Quick Start
 
@@ -112,9 +112,13 @@ The new `tests/frontend/review-planning.test.cjs` defaults to loopback port 5816
 
 Shared categories are readable/selectable by authenticated users; only explicitly provisioned active Administrators can create, edit or delete them. Registration and existing/demo accounts default to Regular. Management permission is checked against current server-side account state in both Web and Application layers, not stale role claims. Administrators do not gain access to other users' study data.
 
+Every active user can create, rename and delete personal categories. Ownership comes from the authenticated account, never a submitted user ID. Personal categories are visible/selectable only to their owner, including in the API and study-item forms; administrators cannot access another user's personal library. Names are unique within each active personal library, not across users. Deletion archives the category and preserves existing study items and history; archived categories cannot be selected for new items. Existing shared categories and references remain unchanged. The additive `AddPersonalCategories` migration adds nullable ownership and scoped indexes. Its rollback refuses to remove ownership while personal categories exist; use an approved pre-migration backup for such a rollback.
+
+`tests/frontend/personal-categories.test.cjs` exercises two ordinary accounts, private CRUD, forged category selection, CSRF, archival and responsive layouts. Set `STUDYPLANNER_PERSONAL_TEST_URL` to a `127.0.0.1` preview and `STUDYPLANNER_PERSONAL_TEST_DATABASE` to an explicitly isolated `studyplanner_phase9_browser_*` or `studyplanner_phase10_browser_*` fixture; never run browser fixtures against a real user database.
+
 See [Administrator Operations](ADMINISTRATION.md) for the operator-only UUID-targeted grant/revoke command, confirmation, durable audit, database permissions and migration/rollback order. No public role-management endpoint or default administrator exists. The new API refuses incompatible migration history before serving Production traffic.
 
-The category browser suite `tests/frontend/admin-categories.test.cjs` defaults to loopback port 5819 and requires `STUDYPLANNER_ADMIN_TEST_DATABASE=studyplanner_phase9_browser_<test-id>` plus `STUDYPLANNER_ADMIN_TEST_SOCKET=/private/tmp/studyplanner-<socket-id>`. It uses synthetic registration and explicitly invokes the operator CLI for test-only grant/revoke. The form suite now also requires the corresponding `STUDYPLANNER_FORMS_TEST_DATABASE`/`STUDYPLANNER_FORMS_TEST_SOCKET` for a synthetic administrator fixture; no real accounts may be provisioned by tests. Review/history suites accept their explicitly guarded Phase 9 database names and URL/output environment overrides.
+The category browser suite `tests/frontend/admin-categories.test.cjs` defaults to loopback port 5819 and requires `STUDYPLANNER_ADMIN_TEST_DATABASE=studyplanner_phase9_browser_<test-id>` plus `STUDYPLANNER_ADMIN_TEST_SOCKET=/private/tmp/studyplanner-<socket-id>`. It uses synthetic registration and explicitly invokes the operator CLI for test-only shared-category grant/revoke. The form suite also requires the corresponding `STUDYPLANNER_FORMS_TEST_DATABASE`/`STUDYPLANNER_FORMS_TEST_SOCKET` and now tests personal categories as an ordinary user without role promotion. No real accounts may be provisioned by tests. Review/history suites accept their explicitly guarded Phase 9 database names and URL/output environment overrides.
 
 ## Continuous Integration
 

@@ -134,6 +134,7 @@ textarea.form-control { min-height: 96px; resize: vertical; } .form-check-input:
 .category-actions .btn { font-size: 12px; padding-inline: 12px; }
 .category-icon-actions { display: flex; gap: 4px; }
 .category-icon-actions form { margin: 0; }
+.category-scope { display: inline-flex; align-items: center; gap: 6px; margin: 0 0 12px; color: var(--text-muted); font-size: 12px; }
 .category-pagination { display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-top: 24px; font-size: 13px; }
 @media (max-width: 1024px) { .editor-columns { gap: 28px; } .category-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } .editor-grid { grid-template-columns: minmax(0, 1fr); } }
 @media (max-width: 768px) { .editor-columns { grid-template-columns: minmax(0, 1fr); gap: 0; } .editor-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }

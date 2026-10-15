@@ -1,11 +1,14 @@
 @model StudyPlanner.Application.Commands.Categories.CreateCategoryCommand
+@inject Microsoft.AspNetCore.Authorization.IAuthorizationService Authorization
 @{ ViewData["Title"] = "Create Category"; var fields = new StudyPlanner.Web.Models.CategoryFormViewModel(Model?.Name ?? "", Model?.Description); }
 <div class="container editor-page category-editor">
-    <header class="page-heading"><div><div class="eyebrow">Shared study categories</div><h1>Create Category</h1></div><a asp-action="Index" class="icon-button" title="Back to categories" aria-label="Back to categories"><i class="bi bi-arrow-left" aria-hidden="true"></i></a></header>
+    <header class="page-heading"><div><div class="eyebrow">Your study library</div><h1>Create Category</h1></div><a asp-action="Index" class="icon-button" title="Back to categories" aria-label="Back to categories"><i class="bi bi-arrow-left" aria-hidden="true"></i></a></header>
     <form asp-action="Create" method="post">
         <div asp-validation-summary="All" class="validation-summary" role="alert" tabindex="-1" data-error-summary></div>
         @if (ViewBag.Errors is List<string> errors && errors.Any() && ViewData.ModelState.IsValid) { <div class="alert alert-danger" role="alert">@string.Join(" ", errors)</div> }
         @await Html.PartialAsync("_FormFields", fields)
+        @if ((await Authorization.AuthorizeAsync(User, null, StudyPlanner.Web.Security.CategoryManagementRequirement.Policy)).Succeeded)
+        { <div class="form-check mt-3"><input asp-for="IsShared" class="form-check-input" /><label asp-for="IsShared" class="form-check-label">Shared category</label></div> }
         <div class="editor-actions"><button type="submit" class="btn btn-primary"><i class="bi bi-plus-lg" aria-hidden="true"></i>Create category</button><a asp-action="Index" class="btn btn-outline-secondary">Cancel</a></div>
     </form>
 </div>

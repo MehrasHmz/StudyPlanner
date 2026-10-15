@@ -6,15 +6,18 @@ public class Category : Entity
     public string Name { get; private set; } = string.Empty;
     public string Description { get; private set; } = string.Empty;
     public bool IsDeleted { get; private set; }
+    public Guid? UserId { get; private set; }
     private readonly List<StudyItem> _studyItems = new();
     public IReadOnlyCollection<StudyItem> StudyItems => _studyItems.AsReadOnly();
 
     private Category() : base() { }
-    public Category(string name, string description = "") : base()
+    public Category(string name, string description = "", Guid? userId = null) : base()
     {
         if (string.IsNullOrWhiteSpace(name)) throw new ArgumentException("Category name is required.");
         Name = name.Trim();
         Description = description?.Trim() ?? string.Empty;
+        if (userId == Guid.Empty) throw new ArgumentException("Category owner is required.");
+        UserId = userId;
     }
     public Category(Guid id, string name, string description = "") : base(id)
     {

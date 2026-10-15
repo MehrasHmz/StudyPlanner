@@ -35,7 +35,9 @@ public class CategoryConfig : IEntityTypeConfiguration<Category>
     {
         b.HasKey(x => x.Id);
         b.Property(x => x.Name).IsRequired().HasMaxLength(100);
-        b.HasIndex(x => x.Name).IsUnique();
+        b.HasIndex(x => x.Name).IsUnique().HasFilter("\"UserId\" IS NULL AND NOT \"IsDeleted\"");
+        b.HasIndex(x => new { x.UserId, x.Name }).IsUnique().HasFilter("\"UserId\" IS NOT NULL AND NOT \"IsDeleted\"");
+        b.HasOne<User>().WithMany().HasForeignKey(x => x.UserId).OnDelete(DeleteBehavior.Restrict);
         b.HasQueryFilter(x => !x.IsDeleted);
     }
 }

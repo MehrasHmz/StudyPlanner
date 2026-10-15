@@ -100,11 +100,18 @@ public class StudyItemOwnershipTests
 
     private Task Mutate(string operation, Guid id, Guid userId) => operation switch
     {
-        "edit" => new UpdateStudyItemHandler(_repo.Object).Handle(new UpdateStudyItemCommand(id,
+        "edit" => new UpdateStudyItemHandler(_repo.Object, Categories()).Handle(new UpdateStudyItemCommand(id,
             "Updated title", "Updated description", StudyItemType.Algorithm, DifficultyLevel.Advanced,
             45, 5, Guid.NewGuid(), null, userId), default),
         "delete" => new DeleteStudyItemHandler(_repo.Object).Handle(new DeleteStudyItemCommand(id, userId), default),
         "toggle" => new ToggleCompleteHandler(_repo.Object).Handle(new ToggleCompleteCommand(id, userId), default),
         _ => throw new ArgumentOutOfRangeException(nameof(operation))
     };
+    private static ICategoryRepository Categories()
+    {
+        var categories = new Mock<ICategoryRepository>();
+        categories.Setup(r => r.GetByIdAsync(It.IsAny<Guid>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync((Guid id, CancellationToken _) => new Category(id, "Shared category"));
+        return categories.Object;
+    }
 }

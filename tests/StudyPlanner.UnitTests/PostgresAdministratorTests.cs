@@ -129,10 +129,10 @@ public class PostgresAdministratorTests : IClassFixture<PostgresTestDatabase>
         var loginToken = await ProgressHistoryTests.Token(client, "/Auth/Login");
         using var login = await client.PostAsync("/Auth/Login", new FormUrlEncodedContent(new Dictionary<string, string>
         { ["Email"] = user.Email, ["Password"] = SecurityTestStore.OwnerPassword, ["__RequestVerificationToken"] = loginToken })); login.StatusCode.Should().Be(HttpStatusCode.Redirect);
-        (await client.GetAsync("/Categories/Create")).StatusCode.Should().Be(HttpStatusCode.Forbidden);
+        (await client.GetAsync("/Categories/Create")).StatusCode.Should().Be(HttpStatusCode.OK);
         await using (var op = _database.CreateContext()) await new RoleProvisioner(op).ApplyAsync(user.Id, UserRole.Administrator, "test", "grant", true);
         var token = await ProgressHistoryTests.Token(client, "/Categories/Create"); var name = "HTTP category " + Guid.NewGuid();
-        var fields = new Dictionary<string, string> { ["Name"] = name, ["Description"] = "Shared", ["__RequestVerificationToken"] = token };
+        var fields = new Dictionary<string, string> { ["Name"] = name, ["Description"] = "Shared", ["IsShared"] = "true", ["__RequestVerificationToken"] = token };
         (await client.PostAsync("/Categories/Create", new FormUrlEncodedContent(fields))).StatusCode.Should().Be(HttpStatusCode.Redirect);
         Guid categoryId;
         await using (var context = _database.CreateContext())
@@ -189,7 +189,7 @@ public class PostgresRoleMigrationTests
             users.Single(u => u.Email == "demo@studyplanner.com").Role.Should().Be(UserRole.Regular);
             (await context.Categories.AsNoTracking().Select(c => new { c.Id, c.Name }).ToListAsync()).Should().BeEquivalentTo(categories);
             (await context.Set<RoleChangeAudit>().CountAsync()).Should().Be(0);
-            (await context.Database.GetAppliedMigrationsAsync()).Should().HaveCount(2);
+            (await context.Database.GetAppliedMigrationsAsync()).Should().HaveCount(3);
         }
         finally { await database.DisposeAsync(); }
     }

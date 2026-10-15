@@ -42,10 +42,14 @@ public class CategoryRepository : Repository<Category>, ICategoryRepository
     public async Task<bool> HasStudyItemsAsync(Guid id, CancellationToken ct = default) =>
         await _ctx.StudyItems.IgnoreQueryFilters().AnyAsync(i => i.CategoryId == id, ct);
     public async Task<Category?> GetByNameAsync(string name, CancellationToken ct = default) =>
-        await _ctx.Categories.IgnoreQueryFilters().FirstOrDefaultAsync(c => c.Name == name, ct);
-    public async Task<IReadOnlyList<Category>> GetPagedAsync(int page, int size, CancellationToken ct = default) =>
-        await _ctx.Categories.AsNoTracking().OrderBy(c => c.Name).Skip((page - 1) * size).Take(size).ToListAsync(ct);
-    public async Task<int> GetCountAsync(CancellationToken ct = default) => await _ctx.Categories.CountAsync(ct);
+        await _ctx.Categories.IgnoreQueryFilters().FirstOrDefaultAsync(c => c.UserId == null && c.Name == name, ct);
+    public async Task<Category?> GetActiveByNameAsync(string name, Guid? userId, CancellationToken ct = default) =>
+        await _ctx.Categories.FirstOrDefaultAsync(c => c.UserId == userId && c.Name == name.Trim(), ct);
+    public async Task<IReadOnlyList<Category>> GetPagedAsync(int page, int size, CancellationToken ct = default, Guid? userId = null) =>
+        await _ctx.Categories.AsNoTracking().Where(c => c.UserId == null || c.UserId == userId)
+            .OrderBy(c => c.UserId == null).ThenBy(c => c.Name).ThenBy(c => c.Id).Skip((page - 1) * size).Take(size).ToListAsync(ct);
+    public async Task<int> GetCountAsync(CancellationToken ct = default, Guid? userId = null) =>
+        await _ctx.Categories.CountAsync(c => c.UserId == null || c.UserId == userId, ct);
 }
 public class StudyItemRepository : Repository<StudyItem>, IStudyItemRepository
 {

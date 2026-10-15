@@ -1,16 +1,16 @@
 # Shared Category Administration
 
-Categories remain global. Only active accounts with persisted role `Administrator` may create, edit, rename or delete them. Regular users can view/select active categories and manage only their own study data. Administrator status does not bypass private item/session/progress ownership.
+Existing categories remain shared. Only active accounts with persisted role `Administrator` may manage shared categories. Every active user can create, edit and archive their own personal categories; personal categories are private even from administrators. Administrator status does not bypass private category/item/session/progress ownership.
 
 ## Roles And Enforcement
 
 `Users.Role` is a non-null integer: `0` Regular, `1` Administrator, with database default 0 and a check constraint. Existing users, registration and the demo seed remain Regular. Unknown values are rejected by the database; authentication rejects unknown stored values and management requires exact Administrator status.
 
-The `ManageSharedCategories` policy checks the current account through the server-side authenticated user UUID. Create GET/POST, Edit GET/POST and Delete POST are protected. All three mutation handlers independently require the same authoritative permission; no role/user ID is accepted in category commands. Non-HTTP Application hosts default to an anonymous identity and deny management unless a trusted host supplies an authenticated caller.
+The `ManageSharedCategories` policy checks the current account through the server-side authenticated user UUID. Category pages require authentication; mutation handlers independently validate the active account and ownership. Creating a shared category requires an explicit `IsShared` choice and current administrator permission. Editing/deleting an existing shared category requires that same permission. Owner UUIDs cannot be submitted or reassigned. Non-HTTP Application hosts default to an anonymous identity and deny management unless a trusted host supplies an authenticated caller.
 
 No role claim grants management. Each privileged request and handler checks current persisted state without a role cache. Granting access works on the next request with an existing valid cookie; revoking it produces 403 on subsequent management requests while normal user access remains. Deactivation/missing accounts/invalid role state invalidate cookies. Already-running requests that passed a check are not cancelled retroactively; drain traffic if an emergency revocation requires that stronger boundary.
 
-Regular users do not see catalog mutation links, including the StudyItem form's new-category link. Forbidden management URLs return a themed 403 page with a return link. The existing read-only `/api/categories/list` remains authenticated and has no mutation route. CSRF and category reference/deletion safeguards remain enabled.
+Regular users see personal-category creation links and edit/delete controls only on their own categories. Shared edit/delete controls remain administrator-only. Foreign personal-category IDs return 404; forbidden shared management returns a themed 403 page. The read-only `/api/categories/list` remains authenticated and returns only shared and caller-owned active categories. CSRF remains enabled. Shared categories referenced by study items cannot be deleted; archiving a personal category preserves its items and history.
 
 ## Operator-Only Provisioning
 
@@ -66,6 +66,8 @@ Durable audit is not an append-only cryptographically protected ledger: a databa
 ## Migration And Deployment
 
 New additive migration: `20261014075951_AddUserRolesAndRoleAudit`. It adds Role with default 0, the audit table, role checks and the target/time index. Existing IDs, credentials, categories, references and history are not rewritten. Historical migrations are unchanged. The current model snapshot includes the new schema; the demo seed's only role addition is Regular.
+
+The subsequent `20261014161047_AddPersonalCategories` migration adds nullable category ownership, a restrictive user foreign key, and active-name uniqueness per owner. Existing categories stay shared (`UserId = NULL`) without changing their IDs, descriptions or references. Back up before migrating. Do not downgrade this schema while personal categories exist: the rollback explicitly refuses to expose those categories as shared data. Use a reviewed pre-migration backup if a downgrade is required.
 
 Order: back up the approved database, stop/drain old writers if required, run the one-shot `--migrate-only` service with migration credentials, verify migration success, then start the new API. Compose already waits for the migration service to exit successfully. Non-Development/non-Testing startup also requires applied migration IDs to match the built artifact before binding HTTP. Development continues its existing automatic migration behavior; the operator command never applies migrations.
 

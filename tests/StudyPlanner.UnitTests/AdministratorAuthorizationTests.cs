@@ -37,14 +37,13 @@ public class AdministratorAuthorizationTests
         using var response = await client.PostAsync(path, new FormUrlEncodedContent(new Dictionary<string, string>
         {
             ["Id"] = factory.Store.Category.Id.ToString(), ["Name"] = "Forged", ["Role"] = "Administrator", ["IsAdmin"] = "true",
-            ["UserId"] = Guid.NewGuid().ToString(), ["__RequestVerificationToken"] = token
+            ["UserId"] = Guid.NewGuid().ToString(), ["__RequestVerificationToken"] = token, ["IsShared"] = "true"
         }));
         response.StatusCode.Should().Be(HttpStatusCode.Forbidden); factory.Store.Writes.Should().Be(writes);
         factory.Store.Category.IsDeleted.Should().BeFalse(); factory.Store.Category.Name.Should().Be("Test category");
     }
 
     [Theory]
-    [InlineData("/Categories/Create")]
     [InlineData("/Categories/Edit/")]
     public async Task RegularUser_ManagementGetIsForbiddenAndSharedReadsRemainUsable(string path)
     {
@@ -52,8 +51,8 @@ public class AdministratorAuthorizationTests
         using var response = await client.GetAsync(path.EndsWith('/') ? path + factory.Store.Category.Id : path);
         response.StatusCode.Should().Be(HttpStatusCode.Forbidden);
         (await response.Content.ReadAsStringAsync()).Should().Contain("Back to categories");
-        (await client.GetStringAsync("/Categories")).Should().Contain("Test category").And.NotContain("/Categories/Create").And.NotContain("/Categories/Edit").And.NotContain("/Categories/Delete");
-        (await client.GetStringAsync("/StudyItems/Create")).Should().Contain(factory.Store.Category.Id.ToString()).And.NotContain("New category");
+        (await client.GetStringAsync("/Categories")).Should().Contain("Test category").And.Contain("/Categories/Create").And.NotContain("/Categories/Edit").And.NotContain("/Categories/Delete");
+        (await client.GetStringAsync("/StudyItems/Create")).Should().Contain(factory.Store.Category.Id.ToString()).And.Contain("New category");
         (await client.GetAsync("/api/categories/list")).StatusCode.Should().Be(HttpStatusCode.OK);
     }
 
@@ -99,7 +98,7 @@ public class AdministratorAuthorizationTests
         var writes = factory.Store.Writes;
         var error = await Record.ExceptionAsync(async () =>
         {
-            if (action == "create") await new CreateCategoryHandler(factory.Store.CategoryRepository.Object, permission).Handle(new("Valid", ""), default);
+            if (action == "create") await new CreateCategoryHandler(factory.Store.CategoryRepository.Object, permission).Handle(new("Valid", "", IsShared: true), default);
             else if (action == "edit") await new UpdateCategoryHandler(factory.Store.CategoryRepository.Object, permission).Handle(new(factory.Store.Category.Id, "Valid", ""), default);
             else await new DeleteCategoryHandler(factory.Store.CategoryRepository.Object, permission).Handle(new(factory.Store.Category.Id), default);
         });
@@ -132,9 +131,9 @@ public class AdministratorAuthorizationTests
         (await client.GetStringAsync("/Categories")).Should().Contain("/Categories/Create");
         factory.Store.Owner.SetRole(UserRole.Regular); var writes = factory.Store.Writes;
         using var response = await client.PostAsync("/Categories/Create", new FormUrlEncodedContent(new Dictionary<string, string>
-        { ["Name"] = "After revocation", ["__RequestVerificationToken"] = token }));
+        { ["Name"] = "After revocation", ["IsShared"] = "true", ["__RequestVerificationToken"] = token }));
         response.StatusCode.Should().Be(HttpStatusCode.Forbidden); factory.Store.Writes.Should().Be(writes);
-        (await client.GetStringAsync("/Categories")).Should().NotContain("/Categories/Create");
+        (await client.GetStringAsync("/Categories")).Should().Contain("/Categories/Create").And.NotContain("/Categories/Edit");
         (await client.GetAsync("/Sessions/History")).StatusCode.Should().Be(HttpStatusCode.OK);
     }
 
@@ -159,7 +158,7 @@ public class AdministratorAuthorizationTests
         var identity = new ClaimsIdentity(new[] { new Claim(ClaimTypes.NameIdentifier, factory.Store.Owner.Id.ToString()), new Claim(ClaimTypes.Role, "Administrator") }, CookieAuthenticationDefaults.AuthenticationScheme);
         var ticket = new AuthenticationTicket(new ClaimsPrincipal(identity), new AuthenticationProperties { IssuedUtc = DateTimeOffset.UtcNow, ExpiresUtc = DateTimeOffset.UtcNow.AddHours(1) }, CookieAuthenticationDefaults.AuthenticationScheme);
         client.DefaultRequestHeaders.Add("Cookie", options.Cookie.Name + "=" + options.TicketDataFormat.Protect(ticket));
-        (await client.GetAsync("/Categories/Create")).StatusCode.Should().Be(HttpStatusCode.Forbidden);
+        (await client.GetAsync("/Categories/Edit/" + factory.Store.Category.Id)).StatusCode.Should().Be(HttpStatusCode.Forbidden);
     }
 
     [Fact]

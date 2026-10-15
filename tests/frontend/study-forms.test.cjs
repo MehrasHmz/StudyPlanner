@@ -35,16 +35,12 @@ let browser;
     await page.getByRole('button', { name: 'Create account' }).click(); await page.waitForURL('**/Auth/Login');
     await page.locator('[name="Email"]').fill(email); await page.locator('[name="Password"]').fill('Forms-review-9!');
     await page.getByRole('button', { name: 'Sign in', exact: true }).click(); await page.waitForURL(base + '/');
-    // Category form tests now require an explicitly provisioned synthetic administrator.
+    // Refuse to write fixtures unless the caller explicitly selects an isolated preview.
     const database = process.env.STUDYPLANNER_FORMS_TEST_DATABASE, socket = process.env.STUDYPLANNER_FORMS_TEST_SOCKET;
     if (!/^studyplanner_phase(?:9|10)_browser_[a-z0-9_]+$/.test(database || '') || !socket?.startsWith('/private/tmp/studyplanner-'))
-        throw new Error('Configure an isolated Phase 9 database/socket for operator-controlled form-test provisioning.');
+        throw new Error('Configure an isolated database/socket for form-test fixtures.');
     const id = execFileSync('/opt/homebrew/bin/psql', ['-h', socket, '-p', '55439', '-U', 'studyplanner_test', '-d', database, '-At', '-c', `SELECT "Id" FROM "Users" WHERE "Email"='${email}'`], { encoding: 'utf8' }).trim();
     assert.match(id, /^[a-f0-9-]{36}$/);
-    const web = require('node:path').resolve('src/StudyPlanner.Web');
-    execFileSync(process.env.STUDYPLANNER_TEST_DOTNET || '/Users/m/.dotnet/dotnet', [`${web}/bin/Release/net8.0/StudyPlanner.Web.dll`, '--manage-user-role', '--user-id', id, '--role', 'administrator', '--operator', 'forms-test', '--reason', 'Synthetic category form regression', '--confirm'], {
-        cwd: web, env: { ...process.env, ASPNETCORE_ENVIRONMENT: 'Testing', ConnectionStrings__DefaultConnection: `Host=${socket};Port=55439;Username=studyplanner_test;Database=${database}` }
-    });
     await page.goto(base + '/Categories/Create'); await capture('category-create');
     check(await page.locator('#Description').getAttribute('data-val-required') === null, 'Optional category notes have no required metadata');
     const name = `Networks ${stamp}`;

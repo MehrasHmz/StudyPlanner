@@ -4,7 +4,7 @@ using StudyPlanner.Domain.Services;
 namespace StudyPlanner.Application.DTOs;
 public record UserDto(Guid Id, string FullName, string Email, DateTime CreatedAt);
 public record AuthDto(string AccessToken, UserDto User);
-public record CategoryDto(Guid Id, string Name, string Description);
+public record CategoryDto(Guid Id, string Name, string Description, Guid? UserId = null, bool CanManage = false);
 public record StudyItemDto(Guid Id, string Title, string Description, StudyItemType Type, DifficultyLevel Difficulty,
     int EstimatedDurationMinutes, int Priority, DateTime? NextReviewDate, bool IsCompleted, Guid CategoryId,
     string CategoryName, Guid UserId, DateTime CreatedAt)

@@ -21,23 +21,22 @@ public class CategoriesController : BaseController
         return View(result);
     }
 
-    [Authorize(Policy = CategoryManagementRequirement.Policy)]
     public IActionResult Create()
     {
         ViewBag.Errors = new List<string>();
         return View();
     }
 
-    [Authorize(Policy = CategoryManagementRequirement.Policy)]
     public async Task<IActionResult> Edit(Guid id)
     {
         var cat = await _mediator.Send(new GetCategoryByIdQuery(id), HttpContext.RequestAborted);
         if (cat == null) return NotFound();
+        if (!cat.CanManage) return Forbid();
         ViewBag.Errors = new List<string>();
         return View(cat);
     }
 
-    [HttpPost, Authorize(Policy = CategoryManagementRequirement.Policy)]
+    [HttpPost]
     public async Task<IActionResult> Create(CreateCategoryCommand cmd)
     {
         if (!ModelState.IsValid) return View(cmd);
@@ -62,11 +61,12 @@ public class CategoriesController : BaseController
         }
     }
 
-    [HttpPost, Authorize(Policy = CategoryManagementRequirement.Policy)]
+    [HttpPost]
     public async Task<IActionResult> Edit(UpdateCategoryCommand cmd)
     {
         var existing = await _mediator.Send(new GetCategoryByIdQuery(cmd.Id), HttpContext.RequestAborted);
         if (existing == null) return NotFound();
+        if (!existing.CanManage) return Forbid();
         if (!ModelState.IsValid) return View(existing);
         try
         {
@@ -81,6 +81,7 @@ public class CategoriesController : BaseController
             return View(existing);
         }
         catch (CategoryManagementDeniedException) { return Forbid(); }
+        catch (KeyNotFoundException) { return NotFound(); }
         catch (Exception ex)
         {
             HttpContext.RequestServices?.GetService<ILogger<CategoriesController>>()?.LogError(ex, "Category update failed.");
@@ -89,7 +90,7 @@ public class CategoriesController : BaseController
         }
     }
 
-    [HttpPost, Authorize(Policy = CategoryManagementRequirement.Policy)]
+    [HttpPost]
     public async Task<IActionResult> Delete(Guid id)
     {
         try { await _mediator.Send(new DeleteCategoryCommand(id)); }

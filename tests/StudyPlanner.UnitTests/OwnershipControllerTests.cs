@@ -32,6 +32,11 @@ public class OwnershipControllerTests : IDisposable
         services.AddSingleton(_items.Object);
         services.AddSingleton(_sessions.Object);
         services.AddSingleton(_progress.Object);
+        var categories = new Mock<ICategoryRepository>();
+        categories.Setup(r => r.GetByIdAsync(It.IsAny<Guid>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync((Guid id, CancellationToken _) => new Category(id, "Shared category"));
+        services.AddSingleton(categories.Object);
+        services.AddSingleton(Mock.Of<IUserRepository>());
         _services = services.BuildServiceProvider();
     }
 

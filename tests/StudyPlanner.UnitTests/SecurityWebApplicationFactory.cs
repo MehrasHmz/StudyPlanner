@@ -115,10 +115,13 @@ public sealed class SecurityTestStore
         UserRepository.Setup(r => r.Update(It.IsAny<User>())).Callback<User>(_ => Writes++);
         UserRepository.Setup(r => r.SaveChangesAsync(It.IsAny<CancellationToken>())).Callback(() => Writes++).ReturnsAsync(1);
 
-        CategoryRepository.Setup(r => r.GetPagedAsync(It.IsAny<int>(), It.IsAny<int>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync((int page, int size, CancellationToken _) => (IReadOnlyList<Category>)Categories.Values
-                .Where(c => !c.IsDeleted).Skip((page - 1) * size).Take(size).ToList());
-        CategoryRepository.Setup(r => r.GetCountAsync(It.IsAny<CancellationToken>())).ReturnsAsync(() => Categories.Values.Count(c => !c.IsDeleted));
+        CategoryRepository.Setup(r => r.GetPagedAsync(It.IsAny<int>(), It.IsAny<int>(), It.IsAny<CancellationToken>(), It.IsAny<Guid?>()))
+            .ReturnsAsync((int page, int size, CancellationToken _, Guid? userId) => (IReadOnlyList<Category>)Categories.Values
+                .Where(c => !c.IsDeleted && (c.UserId == null || c.UserId == userId)).Skip((page - 1) * size).Take(size).ToList());
+        CategoryRepository.Setup(r => r.GetCountAsync(It.IsAny<CancellationToken>(), It.IsAny<Guid?>()))
+            .ReturnsAsync((CancellationToken _, Guid? userId) => Categories.Values.Count(c => !c.IsDeleted && (c.UserId == null || c.UserId == userId)));
+        CategoryRepository.Setup(r => r.GetActiveByNameAsync(It.IsAny<string>(), It.IsAny<Guid?>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync((string name, Guid? userId, CancellationToken _) => Categories.Values.FirstOrDefault(c => !c.IsDeleted && c.UserId == userId && c.Name == name.Trim()));
         CategoryRepository.Setup(r => r.GetByIdAsync(It.IsAny<Guid>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync((Guid id, CancellationToken _) => Categories.GetValueOrDefault(id));
         CategoryRepository.Setup(r => r.AddAsync(It.IsAny<Category>(), It.IsAny<CancellationToken>()))
