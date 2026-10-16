@@ -33,7 +33,7 @@ h1 { font-size: 32px; } h2 { font-size: 24px; } h3 { font-size: 20px; } h4, h5 {
 .skip-link { position: absolute; top: -100px; left: 16px; z-index: 2000; background: var(--primary); color: var(--primary-ink); padding: 12px 20px; } .skip-link:focus { top: 8px; }
 .navbar { background: var(--bg-body); border-bottom: 1px solid var(--border-subtle); padding: 16px 0; }
 .navbar-brand { color: var(--text-primary) !important; display: inline-flex; align-items: center; gap: 10px; font-size: 19px; font-weight: 700; margin-right: 34px; }
-.brand-logo { width: 34px; height: 34px; object-fit: contain; }
+.brand-logo { display: inline-block; width: 34px; height: 34px; flex: 0 0 34px; background-color: var(--primary); -webkit-mask: url('/logo.svg') center / contain no-repeat; mask: url('/logo.svg') center / contain no-repeat; }
 .nav-link { color: var(--text-secondary); padding: 10px 12px !important; border-radius: 6px; }
 .nav-link:hover, .nav-link[aria-current="page"] { color: var(--text-primary); background: var(--bg-hover); } .nav-link[aria-current="page"] { color: var(--primary); }
 .navbar-toggler { color: var(--text-primary); border: 1px solid var(--border-subtle); min-width: 44px; min-height: 44px; }
